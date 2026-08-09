@@ -259,6 +259,7 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         try {
             PhysicalAssetProperty<Components3D> physicalAssetProperty = new PhysicalAssetProperty<>("velocity", new Components3D(0.0,0.0,0.0));
             this.digitalTwinStateManager.createProperty(new DigitalTwinStateProperty<>(physicalAssetProperty.getKey(),

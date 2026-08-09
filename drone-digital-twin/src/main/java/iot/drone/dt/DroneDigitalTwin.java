@@ -165,12 +165,15 @@ public class DroneDigitalTwin {
             http_digital_adapter_config.addActionFilter(droneId+"-land");
             http_digital_adapter_config.addActionFilter(droneId+"-disarm");
             http_digital_adapter_config.addActionFilter("waypoints");
+            http_digital_adapter_config.addPropertyFilter("position");
+            http_digital_adapter_config.addPropertyFilter("status");
+            http_digital_adapter_config.addPropertyFilter(droneId+"-entanglement");
             //http_digital_adapter_config.addActionFilter("stabilize");
             digitalTwin.addDigitalAdapter(new HttpDigitalAdapter(http_digital_adapter_config, digitalTwin));
 
 
             MqttDigitalAdapterConfiguration mqttDigitalAdapterConfiguration = MqttDigitalAdapterConfiguration.builder(
-                            "mosquitto", 1883, droneId + "-mqtt-client")
+                            "localhost", 1883, droneId + "-mqtt-client")
                     .addActionTopic("swarm-takeoff", BASE_TOPIC + "swarm/action/takeoff", Function.identity())
                     .addActionTopic("swarm-land", BASE_TOPIC + "swarm/action/land", Function.identity())
                     .addActionTopic("swarm-arm", BASE_TOPIC + "swarm/action/arm", Function.identity())
