@@ -109,85 +109,6 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
     @Override
     protected void onStart() {
 
-        try {
-            MqttClient client = new MqttClient(broker, MqttClient.generateClientId());
-            client.connect();
-
-            // Drone
-            publish(client, nodeTopic, String.format(
-                    "{\"label\":\"Drone\",\"id\":\"%s\"}", droneId));
-
-            publish(client, nodeTopic, String.format(
-                    "{\"label\":\"Digital_Twin\",\"id\":\"%s\"}", "dt-"+droneId));
-
-            // Websocket Server
-            publish(client, nodeTopic, String.format(
-                    "{\"label\":\"WebsocketServer\",\"id\":\"%s\",\"properties\":{\"type\":\"websocket\"}}", websocketServerId));
-
-            // Sensore
-            publish(client, nodeTopic, String.format(
-                    "{\"label\":\"Payload\",\"id\":\"%s\"}",
-                    sensorType
-            ));
-
-            // Communication Tech
-            publish(client, nodeTopic, String.format(
-                    "{\"label\":\"Configuration\",\"id\":\"%s\"}",
-                    commType
-            ));
-
-            // Zone
-            publish(client, nodeTopic, String.format(
-                    "{\"label\":\"Operational_Zone\",\"id\":\"%s\",\"properties\":{\"class\":\"%s\"}}", zoneId, zoneClass));
-
-            // Drone -> Server
-            publish(client, edgeTopic, String.format(
-                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"WebsocketServer\",\"id\":\"%s\"},\"relationship\":\"CONNECTED_TO\"}",
-                    droneId, websocketServerId));
-
-            // Drone -> Sensor
-            publish(client, edgeTopic, String.format(
-                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"Payload\",\"id\":\"%s\"},\"relationship\":\"EQUIPPED_WITH\"}",
-                    droneId, sensorType
-            ));
-
-            // Drone -> Technology
-            publish(client, edgeTopic, String.format(
-                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"Configuration\",\"id\":\"%s\"},\"relationship\":\"CONFIGURED_WITH\"}",
-                    droneId, commType
-            ));
-            // Drone -> Zone
-            publish(client, edgeTopic, String.format(
-                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"Operational_Zone\",\"id\":\"%s\"},\"relationship\":\"LOCATED_IN\"}",
-                    droneId, zoneId));
-            publish(client, edgeTopic, String.format(
-                    """
-                    {
-                      "from": { "label": "Drone", "id": "%s" },
-                      "to":   { "label": "Digital_Twin",   "id": "%s" },
-                      "relationship": "REPLICATED_BY",
-                      "attributes": {
-                        "reliability": 1.0,
-                        "timeliness": 1.0,
-                        "packet validity": 1.0,
-                        "packet order": 1.0,
-                        "odte": 1.0
-                      }
-                    }
-                    """,
-                    droneId,
-                    "dt-"+droneId
-            ));
-
-            startBenchmark(10, "14:04:00", 1800);
-            startSendingOdteMetrics(client, edgeUpdateTopic);
-            System.out.println("Grafo aggiornato: Drone e Server creati e collegati.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
     }
 
     @Override
@@ -354,6 +275,87 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
         // Qui ci va funzione per verificare se velocità è maggiore di 0
         //startSendingOdteMetrics();
         offboardControlMode();
+
+        try {
+            MqttClient client = new MqttClient(broker, MqttClient.generateClientId());
+            client.connect();
+
+            // Drone
+            publish(client, nodeTopic, String.format(
+                    "{\"label\":\"Drone\",\"id\":\"%s\"}", droneId));
+
+            publish(client, nodeTopic, String.format(
+                    "{\"label\":\"Digital_Twin\",\"id\":\"%s\"}", "dt-"+droneId));
+
+            // Websocket Server
+            publish(client, nodeTopic, String.format(
+                    "{\"label\":\"WebsocketServer\",\"id\":\"%s\",\"properties\":{\"type\":\"websocket\"}}", websocketServerId));
+
+            // Sensore
+            publish(client, nodeTopic, String.format(
+                    "{\"label\":\"Payload\",\"id\":\"%s\"}",
+                    sensorType
+            ));
+
+            // Communication Tech
+            publish(client, nodeTopic, String.format(
+                    "{\"label\":\"Configuration\",\"id\":\"%s\"}",
+                    commType
+            ));
+
+            // Zone
+            publish(client, nodeTopic, String.format(
+                    "{\"label\":\"Operational_Zone\",\"id\":\"%s\",\"properties\":{\"class\":\"%s\"}}", zoneId, zoneClass));
+
+            // Drone -> Server
+            publish(client, edgeTopic, String.format(
+                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"WebsocketServer\",\"id\":\"%s\"},\"relationship\":\"CONNECTED_TO\"}",
+                    droneId, websocketServerId));
+
+            // Drone -> Sensor
+            publish(client, edgeTopic, String.format(
+                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"Payload\",\"id\":\"%s\"},\"relationship\":\"EQUIPPED_WITH\"}",
+                    droneId, sensorType
+            ));
+
+            // Drone -> Technology
+            publish(client, edgeTopic, String.format(
+                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"Configuration\",\"id\":\"%s\"},\"relationship\":\"CONFIGURED_WITH\"}",
+                    droneId, commType
+            ));
+            // Drone -> Zone
+            publish(client, edgeTopic, String.format(
+                    "{\"from\":{\"label\":\"Drone\",\"id\":\"%s\"},\"to\":{\"label\":\"Operational_Zone\",\"id\":\"%s\"},\"relationship\":\"LOCATED_IN\"}",
+                    droneId, zoneId));
+            publish(client, edgeTopic, String.format(
+                    """
+                    {
+                      "from": { "label": "Drone", "id": "%s" },
+                      "to":   { "label": "Digital_Twin",   "id": "%s" },
+                      "relationship": "REPLICATED_BY",
+                      "attributes": {
+                        "reliability": 1.0,
+                        "timeliness": 1.0,
+                        "packet validity": 1.0,
+                        "packet order": 1.0,
+                        "odte": 1.0
+                      }
+                    }
+                    """,
+                    droneId,
+                    "dt-"+droneId
+            ));
+
+            //startBenchmark(10, "22:04:00", 1800); // Here you can configure benchmark start
+
+            System.out.println("Graph updated: Drone and Server created and connected.");
+
+            startSendingOdteMetrics(client, edgeUpdateTopic);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
     }
 
