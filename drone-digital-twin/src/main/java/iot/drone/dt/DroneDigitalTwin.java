@@ -14,14 +14,12 @@ import iot.drone.dt.modules.RosPacketErrorDetector;
 import iot.drone.dt.ros.RosCommands;
 import iot.drone.dt.ros.px4_msgs.CustomVehicleOdometry;
 import iot.drone.dt.ros.px4_msgs.CustomVehicleStatus;
-import iot.drone.dt.utils.Components3D;
-import iot.drone.dt.utils.TimestampedNotification;
+import iot.drone.dt.utils.Vector3D;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapter;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapterConfiguration;
 import it.wldt.adapter.mqtt.digital.MqttDigitalAdapter;
 import it.wldt.adapter.mqtt.digital.MqttDigitalAdapterConfiguration;
 import it.wldt.adapter.mqtt.digital.topic.MqttQosLevel;
-import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.core.engine.DigitalTwinEngine;
@@ -53,26 +51,7 @@ public class DroneDigitalTwin {
 
             DigitalTwinEngine digitalTwinEngine = new DigitalTwinEngine();
 
-            // If you are using 1 drone, set targetSystem to 1
-            //digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_4", 9091,1, 3004, 9403, "ws-server-1", "temperature", "config-B", "zone-1", "rural"));
             digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_1", 9090, 1, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
-
-            /*digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_1", 9092, 2, 3001, 9400,
-                    "ws-server-1", "pressure", "config-B", "zone-4", "forest"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_2", 9092, 3, 3002, 9401,
-                    "ws-server-2", "temperature", "config-A", "zone-1", "rural"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_3", 9092,4, 3003, 9402, "ws-server-1", "temperature", "config-B", "zone-4", "forest"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_4", 9093,5, 3004, 9403, "ws-server-1", "temperature", "config-B", "zone-1", "rural"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_5", 9093, 6,3005, 9404, "ws-server-2", "camera", "config-A", "zone-7", "urban"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_6", 9093,7, 3006,9405, "ws-server-2", "humidity", "config-C", "zone-7", "urban"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_7", 9091,8, 3007, 9406, "ws-server-1", "camera", "config-A", "zone-1", "rural"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_8", 9091,9, 3008, 9407, "ws-server-2", "pressure", "config-C", "zone-1", "rural"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_9", 9091,10, 3009, 9408, "ws-server-2", "pressure", "config-B", "zone-7", "urban"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_10", 9093,11, 3010, 9410, "ws-server-1", "humidity", "config-C", "zone-4", "forest"));*/
-
-
-            //digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_11", 9094,12, 3011, 9411, "ws-server-cluster-2", "temperature", "config-A", "zone-1", "rural"));
-            //digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_12", 9094,13, 3012, 9412, "ws-server-cluster-1", "camera", "config-C", "zone-7", "urban"));
 
             digitalTwinEngine.startAll();
 
@@ -106,44 +85,47 @@ public class DroneDigitalTwin {
             WebSocketRosPhysicalAdapterConfiguration PhysicalAdapter1Config = new WebSocketRosPhysicalAdapterConfiguration(
                     droneId + "wesocket-adapter-config-1", rosBridgeClient1, rosCommand);
 
-            // Command methods
+            // Add arm command to physical adapter config
             Method px4_arm = rosCommand.getClass().getDeclaredMethod("px4Arm", byte[].class,
                     RosBridge.class); // Arm
             PhysicalAdapter1Config.addPhysicalAssetActionMethod("arm", "da.digital.action.event",
                     "byte", px4_arm); // Add arming action to physical adapter config
 
+            // Add takeoff command to physical adapter config
             Method px4_take_off = rosCommand.getClass().getDeclaredMethod("px4Takeoff", byte[].class,
                     RosBridge.class);
             PhysicalAdapter1Config.addPhysicalAssetActionMethod("takeoff", "da.digital.action.event",
                     "byte", px4_take_off);
 
+            // Add offboard control to physical adapter config
             Method px4_offboard_control = rosCommand.getClass().getDeclaredMethod("px4Offboard", byte[].class,
                     RosBridge.class);
             PhysicalAdapter1Config.addPhysicalAssetActionMethod("offboard_mode", "da.digital.action.event",
                     "byte", px4_offboard_control);
 
+            // Add controller heartbeat to physical adapter config
             Method px4_pose_hbeat = rosCommand.getClass().getDeclaredMethod("px4TrajectorySetopoint", byte[].class, RosBridge.class); // Pose hbeat (need to send it continously to maintain contact with the drone
             PhysicalAdapter1Config.addPhysicalAssetActionMethod("set_trajectory_setpoint", "da.digital.action.event",
                     "byte", px4_pose_hbeat);
 
+            // Add land command to physical adapter config
             Method px4_land = rosCommand.getClass().getDeclaredMethod("px4Land", byte[].class,
                     RosBridge.class);
             PhysicalAdapter1Config.addPhysicalAssetActionMethod("land", "da.digital.action.event",
                     "byte", px4_land);
 
+            // Add disarm command to physical adapter config
             Method px4_disarm = rosCommand.getClass().getDeclaredMethod("px4Disarm", byte[].class, RosBridge.class); // Disarm
             PhysicalAdapter1Config.addPhysicalAssetActionMethod("disarm", "da.digital.action.event",
-                    "byte", px4_disarm); // Add arming action to physical adapter config
+                    "byte", px4_disarm);
 
             RosSubscription vehicleOdometryTopic = RosSubscription.builder(SIMULATED_DRONE_ID + "/forwarder/vehicle/odometry",
                     CustomVehicleOdometry.TYPE).queueLength(0).throttleRate(50).build();
             DigitalTwinRosTopic odometryTopic = new DigitalTwinRosTopic(vehicleOdometryTopic, getVehicleOdometry(odteManager, rosPacketErrorDetector));
-            /*PhysicalAdapter1Config.addPhysicalAssetPropertyTopic("odometry",
-                    new CustomVehicleOdometry(), odometryTopic);*/
+
             Map<String, Integer> odometry = new HashMap<>();
             odometry.put("position", 0);
             odometry.put("velocity", 0);
-
             PhysicalAdapter1Config.addMultiplePhysicalAssetPropertyTopics(odometry, odometryTopic);
 
             RosSubscription vehicleStatusSubscription = RosSubscription.builder(SIMULATED_DRONE_ID + "/forwarder/vehicle/status",
@@ -151,13 +133,6 @@ public class DroneDigitalTwin {
             DigitalTwinRosTopic vehicleStatusTopic = new DigitalTwinRosTopic(vehicleStatusSubscription, getVehicleStatus(odteManager, rosPacketErrorDetector));
             PhysicalAdapter1Config.addPhysicalAssetPropertyTopic("status",
                     new CustomVehicleStatus(), vehicleStatusTopic);
-
-
-            // Action receive notification event
-            /*RosSubscription actionNoptificationSub = RosSubscription.builder("/forwarder/action/notification",
-                    TimestampedString.TYPE).build();
-            DigitalTwinRosTopic actionNotificationTopic = new DigitalTwinRosTopic(actionNoptificationSub, getTimestampedNotification());
-            PhysicalAdapter1Config.addPhysicalAssetEventTopic("action_notification", "Long", actionNotificationTopic);*/
 
             PhysicalAdapter1Config.build();
 
@@ -229,15 +204,10 @@ public class DroneDigitalTwin {
                             CustomVehicleOdometry.fromJsonObject(msgPayload);
 
                     try {
-                        Components3D position = customVehicleOdometry.getPositionAsArray();
-                        //double posX = position.getX();
-                        //double posY = position.getY();
-                        //double posZ = position.getZ();
+                        Vector3D position = customVehicleOdometry.getPositionAsArray();
 
-                        Components3D velocity = customVehicleOdometry.getVelocityAsArray();
-                        //double velX = velocity.getX();
-                        //double velY = velocity.getY();
-                        //double velZ = velocity.getZ();
+                        Vector3D velocity = customVehicleOdometry.getVelocityAsArray();
+
                         positionEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
                                 "position",
                                 position.getJsonObject()

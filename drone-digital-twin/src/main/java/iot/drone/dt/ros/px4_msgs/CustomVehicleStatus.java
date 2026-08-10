@@ -96,7 +96,7 @@ public class CustomVehicleStatus extends RosMessage {
     public static final int HIL_STATE_ON = 1;
 
     // ==================== FIELDS ====================
-    private int seq;  // ← NUOVO CAMPO CUSTOM
+    private int seq;  // Custom field
     private long timestamp;
     private int armingState;
     private int navState;
@@ -106,13 +106,13 @@ public class CustomVehicleStatus extends RosMessage {
     private int systemId;
     private int componentId;
 
-    // Campi aggiuntivi utili per il debug
+    // Debug fields
     private int latestArmingReason;
     private int latestDisarmingReason;
     private int failsafeDeferState;
     private int hilState;
 
-    // ==================== COSTRUTTORI ====================
+    // ==================== BUILDERS ====================
 
     public CustomVehicleStatus() {
         this(0, 0, 0, false, false, 0, 0, 0, 200);  // ← default seq = 200
@@ -120,7 +120,7 @@ public class CustomVehicleStatus extends RosMessage {
 
     public CustomVehicleStatus(long timestamp, int armingState, int navState, boolean failsafe,
                                boolean preFlightChecksPass, int vehicleType, int systemId, int componentId,
-                               int seq) {  // ← seq aggiunto come ultimo parametro
+                               int seq) {
         this(timestamp, armingState, navState, failsafe, preFlightChecksPass, vehicleType,
                 systemId, componentId, 0, 0, 0, 0, seq);
     }
@@ -128,7 +128,7 @@ public class CustomVehicleStatus extends RosMessage {
     public CustomVehicleStatus(long timestamp, int armingState, int navState, boolean failsafe,
                                boolean preFlightChecksPass, int vehicleType, int systemId, int componentId,
                                int latestArmingReason, int latestDisarmingReason, int failsafeDeferState, int hilState,
-                               int seq) {  // ← versione completa con seq
+                               int seq) {
         this.timestamp = timestamp;
         this.armingState = armingState;
         this.navState = navState;
@@ -141,10 +141,10 @@ public class CustomVehicleStatus extends RosMessage {
         this.latestDisarmingReason = latestDisarmingReason;
         this.failsafeDeferState = failsafeDeferState;
         this.hilState = hilState;
-        this.seq = seq;  // ← assegnazione seq
+        this.seq = seq;
 
         JsonObject obj = new JsonObject()
-                .put(FIELD_SEQUENCE, seq)  // ← serializzazione seq (primo campo come nel tuo esempio)
+                .put(FIELD_SEQUENCE, seq)
                 .put(FIELD_TIMESTAMP, timestamp)
                 .put(FIELD_ARMING_STATE, armingState)
                 .put(FIELD_NAV_STATE, navState)
@@ -283,20 +283,20 @@ public class CustomVehicleStatus extends RosMessage {
 
     public String toDetailedString() {
         return String.format("""
-            CustomVehicleStatus {
-              seq: %d,
-              timestamp: %d ms,
-              arming_state: %s (%d),
-              nav_state: %s (%d),
-              vehicle_type: %s (%d),
-              failsafe: %b,
-              pre_flight_checks_pass: %b,
-              system_id: %d, component_id: %d,
-              latest_arming_reason: %s,
-              latest_disarming_reason: %s,
-              failsafe_defer_state: %s,
-              hil_state: %s
-            }""",
+                        CustomVehicleStatus {
+                          seq: %d,
+                          timestamp: %d ms,
+                          arming_state: %s (%d),
+                          nav_state: %s (%d),
+                          vehicle_type: %s (%d),
+                          failsafe: %b,
+                          pre_flight_checks_pass: %b,
+                          system_id: %d, component_id: %d,
+                          latest_arming_reason: %s,
+                          latest_disarming_reason: %s,
+                          failsafe_defer_state: %s,
+                          hil_state: %s
+                        }""",
                 seq,
                 timestamp / 1000,
                 getArmingStateDescription(), armingState,
@@ -311,7 +311,7 @@ public class CustomVehicleStatus extends RosMessage {
         );
     }
 
-    // ==================== METODI DI PARSING JSON ====================
+    // ==================== JSON PARSING ====================
 
     public static CustomVehicleStatus fromJsonString(String jsonString) {
         return CustomVehicleStatus.fromMessage(new RosMessage(jsonString, TYPE));
@@ -339,7 +339,7 @@ public class CustomVehicleStatus extends RosMessage {
         return new CustomVehicleStatus(timestamp, armingState, navState, failsafe,
                 preFlightChecksPass, vehicleType, systemId, componentId,
                 latestArmingReason, latestDisarmingReason, failsafeDeferState, hilState,
-                seq);  // ← passaggio seq al costruttore
+                seq);
     }
 
     @Override
@@ -349,22 +349,23 @@ public class CustomVehicleStatus extends RosMessage {
                 this.systemId, this.componentId,
                 this.latestArmingReason, this.latestDisarmingReason,
                 this.failsafeDeferState, this.hilState,
-                this.seq);  // ← cloning di seq
+                this.seq);
     }
 
-    // ==================== GETTER/SETTER AGGIUNTIVI ====================
+    // ==================== GETTER/SETTER ====================
 
     /**
-     * Incrementa il sequence number (utile per forwarding di messaggi)
+     * Increments the sequence number (useful when forwarding messages).
      */
     public void incrementSeq() {
         this.seq++;
-        // Aggiorna anche il JsonObject interno se necessario
+
+        // Also update the underlying JsonObject if needed
         this.getJsonObject().put(FIELD_SEQUENCE, this.seq);
     }
 
     /**
-     * Restituisce i nomi delle colonne per il file CSV.
+     * Returns the column names for the CSV file.
      */
     public List<String> getLabels() {
         return Arrays.asList(
@@ -388,25 +389,25 @@ public class CustomVehicleStatus extends RosMessage {
     }
 
     /**
-     * Restituisce i valori correnti della riga da inserire nel CSV.
+     * Returns the current row values to be written to the CSV.
      */
     public List<Object> getValues() {
         List<Object> values = new ArrayList<>();
         values.add(seq);
         values.add(timestamp);
 
-        // Arming State: Valore numerico + Stringa leggibile
+        // Arming state: numeric value + human-readable description
         values.add(armingState);
         values.add(getArmingStateDescription());
 
-        // Nav State: Valore numerico + Stringa leggibile
+        // Navigation state: numeric value + human-readable description
         values.add(navState);
         values.add(getNavStateDescription());
 
         values.add(failsafe);
         values.add(preFlightChecksPass);
 
-        // Vehicle Type
+        // Vehicle type
         values.add(vehicleType);
         values.add(getVehicleTypeDescription());
 
@@ -421,40 +422,40 @@ public class CustomVehicleStatus extends RosMessage {
     }
 
     /**
-     * Genera una stringa sintetica che descrive lo stato corrente del drone.
-     * Formato: "[FAILSAFE] [ARMING_STATE] - [NAV_STATE]"
+     * Generates a concise summary of the current drone status.
+     * Format: "[FAILSAFE] [ARMING_STATE] - [NAVIGATION_STATE]"
      */
     public String getStatusSummary() {
         StringBuilder sb = new StringBuilder();
 
-        // 1. Controllo Failsafe (Priorità alta)
+        // 1. Check failsafe status (highest priority)
         if (failsafe) {
             sb.append("[FAILSAFE] ");
         }
 
-        // 2. Stato di Armamento
+        // 2. Arming state
         String armingDesc = getArmingStateDescription();
         sb.append(armingDesc);
 
-        // 3. Separatore e Modalità di Navigazione
+        // 3. Separator and navigation mode
         sb.append(" - ").append(getNavStateDescription());
 
-        // Opzionale: Aggiungere dettagli sul motivo se disarmato o in failsafe
+        // Optional: add reason details if disarmed or in failsafe mode
         if (!isArmed() && latestDisarmingReason != 0) {
             sb.append(" (Reason: ").append(getLatestDisarmingReasonDescription()).append(")");
         } else if (failsafe) {
-            // Potresti voler aggiungere qui il tipo di failsafe se disponibile
-            // Per ora lasciamo generico
+
+            // You may want to include the failsafe type here if available.
+            // For now, keep it generic.
         }
 
         return sb.toString();
     }
 
     /**
-     * Helper per controllare rapidamente se è armato
+     * Convenience helper to quickly determine whether the vehicle is armed.
      */
     public boolean isArmed() {
         return this.armingState == ARMING_STATE_ARMED;
     }
-
 }

@@ -5,12 +5,10 @@ import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import io.vertx.core.json.JsonObject;
 import iot.drone.dt.modules.BenchmarkModule;
 import iot.drone.dt.modules.CsvExporter;
 import iot.drone.dt.modules.OdteManager;
-import iot.drone.dt.ros.px4_msgs.CustomVehicleOdometry;
-import iot.drone.dt.utils.Components3D;
+import iot.drone.dt.utils.Vector3D;
 import iot.drone.dt.utils.TimestampedNotification;
 import it.wldt.adapter.digital.event.DigitalActionWldtEvent;
 import it.wldt.adapter.physical.PhysicalAssetDescription;
@@ -54,7 +52,7 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
 
     Logger px4_shadowing_logger = LoggerFactory.getLogger(DroneDigitalTwinShadowingFunction.class);
 
-    private Components3D pose_cmd = new Components3D(0.0F, 0.0F, -5.0F);
+    private Vector3D pose_cmd = new Vector3D(0.0F, 0.0F, -5.0F);
 
     private byte[] pose_cmd_bytes = pose_cmd.toString().getBytes();
 
@@ -387,33 +385,9 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
                                 new DigitalTwinStateProperty<>(
                                         physicalAssetPropertyWldtEvent.getPhysicalPropertyId(),
                                         physicalAssetPropertyWldtEvent.getBody()));
+                        this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>("state-change", physicalAssetPropertyWldtEvent.getBody(), System.currentTimeMillis()));
                         this.digitalTwinStateManager.commitStateTransaction();
                         break;
-                    /*case "odometry":
-                        this.digitalTwinStateManager.startStateTransaction();
-                        CustomVehicleOdometry odometry = CustomVehicleOdometry.fromJsonObject((JsonObject) physicalAssetPropertyWldtEvent.getBody());
-                        Components3D position = odometry.getPositionAsArray();
-                        double posX = position.getX();
-                        double posY = position.getY();
-                        double posZ = position.getZ();
-
-                        Components3D velocity = odometry.getVelocityAsArray();
-                        double velX = velocity.getX();
-                        double velY = velocity.getY();
-                        double velZ = velocity.getZ();
-                        this.digitalTwinStateManager.updateProperty(
-                                new DigitalTwinStateProperty<>(
-                                        "position",
-                                        position));
-                        this.digitalTwinStateManager.updateProperty(
-                                new DigitalTwinStateProperty<>(
-                                        "velocity",
-                                        velocity));
-                        this.digitalTwinStateManager.commitStateTransaction();
-
-                        // Heartbeat
-                        this.odteManager.incrementHeartbeatsCounter();
-                        break;*/
                     default:
                         this.digitalTwinStateManager.startStateTransaction();
                         this.digitalTwinStateManager.updateProperty(
@@ -430,39 +404,11 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
             px4_shadowing_logger.info("Wldt event null");
         }
 
-        /*try {
-            if (Objects.equals(physicalAssetPropertyWldtEvent.getPhysicalPropertyId(), "state")) {
-                if (!Objects.equals(this.digitalTwinStateManager.getDigitalTwinState().getProperty("state").get().getValue(), physicalAssetPropertyWldtEvent.getBody()))
-                {
-                    this.onPhysicalAssetEventNotification(new PhysicalAssetEventWldtEvent<>("state-change", physicalAssetPropertyWldtEvent.getBody()));
-                }
-                this.updatesCounter.increment(1.0);
-            }
-            this.digitalTwinStateManager.startStateTransaction();
-            if (Objects.equals(physicalAssetPropertyWldtEvent.getPhysicalPropertyId(), "position")) {
-                TimestapedPayload timestapedPayload = (TimestapedPayload) physicalAssetPropertyWldtEvent.getBody();
-                this.digitalTwinStateManager.updateProperty(
-                        new DigitalTwinStateProperty<>(
-                                physicalAssetPropertyWldtEvent.getPhysicalPropertyId(),
-                                physicalAssetPropertyWldtEvent.getBody()));
-                this.digitalTwinStateManager.commitStateTransaction();
-                // Timeliness
-                //timelinessLinkedList.add(new Timeliness(timestapedPayload.getTimestampPhysicalAdapter(), physicalAssetPropertyWldtEvent.getCreationTimestamp(),System.currentTimeMillis() / 1000));
-                this.hearthbeatsCounter.increment(1.0);
-            }
-            if (Objects.equals(physicalAssetPropertyWldtEvent.getPhysicalPropertyId(), "position")){
-                //this.poseUpdatesCounter.inc(1L);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
     }
 
     @Override
     protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
 
-        //px4_shadowing_logger.info("Shadowing - onPhysicalAssetEventNotification - received Event:{}", physicalAssetEventWldtEvent);
         switch (physicalAssetEventWldtEvent.getPhysicalEventKey()) {
             case "action_notification":
                 //Long observationTimestamp = physicalAssetEventWldtEvent.getCreationTimestamp();
@@ -519,7 +465,7 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
                 }
                 break;*/
             case "pose":
-                Components3D positionArray = parseMyArray((byte[]) digitalActionWldtEvent.getBody().toString().getBytes());
+                Vector3D positionArray = parseMyArray((byte[]) digitalActionWldtEvent.getBody().toString().getBytes());
                 assert positionArray != null;
                 this.pose_cmd = positionArray;
                 this.pose_cmd_bytes = (byte[]) pose_cmd.toString().getBytes();
@@ -527,11 +473,10 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
                 break;
             case "waypoints":
                 try {
-                    Components3D[] positionArrays = parseWaypoints(digitalActionWldtEvent.getBody().toString().getBytes());
-                    //px4_shadowing_logger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {}", buildJsonPositionArrayMessage(positionArrays[0]));
+                    Vector3D[] positionArrays = parseWaypoints(digitalActionWldtEvent.getBody().toString().getBytes());
                     //publishPhysicalAssetActionWldtEvent("pose", buildJsonPositionArrayMessage(positionArrays[0]));
                     assert positionArrays != null;
-                    Components3D new_position = positionArrays[0];
+                    Vector3D new_position = positionArrays[0];
                     assert new_position != null;
                     this.pose_cmd = new_position;
                     this.pose_cmd_bytes = (byte[]) pose_cmd.toString().getBytes();
@@ -539,10 +484,10 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
                     Integer j = 0;
                     //Timer.Sample sample = Timer.start();
                     while (i != positionArrays.length) {
-                        Components3D actualPosition = (Components3D) this.digitalTwinStateManager.getDigitalTwinState().getProperty("position").get().getValue();
-                        //Components3D actualPosition = position.getGenericData();
-                        ;
-                        Thread.sleep(100); // prima era 5000
+                        Vector3D actualPosition = (Vector3D) this.digitalTwinStateManager.getDigitalTwinState().getProperty("position").get().getValue();
+                        //Vector3D actualPosition = position.getGenericData();
+
+                        Thread.sleep(100);
                         if ((actualPosition.getX() - positionArrays[j].getX() < 0.75) &&
                                 (actualPosition.getX() - positionArrays[j].getX() > -0.75) &&
                                 (actualPosition.getY() - positionArrays[j].getY() < 0.75) &&
@@ -556,10 +501,10 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
                             this.pose_cmd = new_position;
                             this.pose_cmd_bytes = (byte[]) pose_cmd.toString().getBytes();
                             i = i + 1;
-                            Thread.sleep(100); // prima era 3000
+                            Thread.sleep(100);
                         }
                         else {
-                            Thread.sleep(100); // prima era 1000
+                            Thread.sleep(100);
                         }
                     }
                     //sample.stop(this.odteManager.waypointsTimer);
@@ -604,10 +549,10 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
 
             case "traslation":
                 try {
-                    Components3D traslationArray = parseMyArray((byte[]) digitalActionWldtEvent.getBody().toString().getBytes());
+                    Vector3D traslationArray = parseMyArray((byte[]) digitalActionWldtEvent.getBody().toString().getBytes());
                     assert traslationArray != null;
-                    Components3D currentPosition = (Components3D) this.digitalTwinStateManager.getDigitalTwinState().getProperty("position").get().getValue();
-                    Components3D sum = traslationArray.add(currentPosition);
+                    Vector3D currentPosition = (Vector3D) this.digitalTwinStateManager.getDigitalTwinState().getProperty("position").get().getValue();
+                    Vector3D sum = traslationArray.add(currentPosition);
                     this.pose_cmd = sum;
                     this.pose_cmd_bytes = (byte[]) pose_cmd.toString().getBytes();
                     //verifyDroneArming(true, System.currentTimeMillis());
@@ -660,17 +605,17 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
     }
 
 
-    public static Components3D parseMyArray(byte[] payload) {
+    public static Vector3D parseMyArray(byte[] payload) {
         try {
             Gson gson = new Gson();
-            return gson.fromJson(new String(payload), Components3D.class);
+            return gson.fromJson(new String(payload), Vector3D.class);
         }catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public static String buildJsonPositionArrayMessage(Components3D positionArray){
+    public static String buildJsonPositionArrayMessage(Vector3D positionArray){
         try {
             Gson gson = new Gson();
             return gson.toJson(positionArray);
@@ -707,10 +652,6 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
         ZonedDateTime now = ZonedDateTime.now(zoneId);
         ZonedDateTime startDateTime = now.with(requestedStartTime);
 
-        /*
-         * Se l'orario richiesto è già passato oggi,
-         * il benchmark partirà domani a quell'orario.
-         */
         if (!startDateTime.isAfter(now)) {
             startDateTime = startDateTime.plusDays(1);
         }
@@ -735,23 +676,19 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
 
             ScheduledFuture<?> benchmarkTask = benchmarkModule.getScheduler().scheduleAtFixedRate(() -> {
                 try {
-                    /*
-                     * Timestamp Unix in microsecondi.
-                     * Esempio: 1782551403535386
-                     */
                     Instant instant = Instant.now();
 
                     long timestampUs =
                             instant.getEpochSecond() * 1_000_000L +
                                     instant.getNano() / 1_000L;
 
-                    Components3D currentPosition = (Components3D) this.digitalTwinStateManager
+                    Vector3D currentPosition = (Vector3D) this.digitalTwinStateManager
                             .getDigitalTwinState()
                             .getProperty("position")
                             .get()
                             .getValue();
 
-                    Components3D currentVelocity = (Components3D) this.digitalTwinStateManager
+                    Vector3D currentVelocity = (Vector3D) this.digitalTwinStateManager
                             .getDigitalTwinState()
                             .getProperty("velocity")
                             .get()
@@ -825,10 +762,10 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
         }
     }
 
-    public static Components3D[] parseWaypoints(byte[] payload) {
+    public static Vector3D[] parseWaypoints(byte[] payload) {
         try {
             Gson gson = new Gson();
-            Components3D[] wayPoints = gson.fromJson(new String(payload), Components3D[].class);
+            Vector3D[] wayPoints = gson.fromJson(new String(payload), Vector3D[].class);
             return wayPoints;
         }catch (Exception e) {
             e.printStackTrace();

@@ -30,27 +30,4 @@ public class DigitalTwinRosTopic {
         return rosTopicSubscribeFunction;
     }
 
-
-    /*
-    private final RosTopic topic;
-
-    public RosTopic getTopic() {
-        return topic;
-    }
-
-    private final RosTopicSubscribeFunction rosTopicSubscribeFunction;
-
-    public DigitalTwinRosTopic(RosTopic topic, RosTopicSubscribeFunction rosTopicSubscribeFunction) {
-        this.topic = topic;
-        this.rosTopicSubscribeFunction = rosTopicSubscribeFunction;
-    }
-
-    public WldtEvent<?> applySubscribeFunction(JsonObject topicMessagePayload){
-        return rosTopicSubscribeFunction.apply(topicMessagePayload);
-    }
-
-    public RosTopicSubscribeFunction getSubscribeFunction() {
-        return rosTopicSubscribeFunction;
-    }*/
-
 }

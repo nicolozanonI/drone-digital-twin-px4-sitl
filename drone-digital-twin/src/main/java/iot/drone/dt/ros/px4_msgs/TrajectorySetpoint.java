@@ -85,7 +85,7 @@ public class TrajectorySetpoint extends RosMessage {
                 this.acceleration.clone(), this.jerk.clone(), this.yaw, this.yawSpeed);
     }
 
-    // Utility per gestire i valori non controllati (NaN)
+    // Utility to manage NaN values
     private static float[] createNanArray(int size) {
         float[] arr = new float[size];
         for (int i = 0; i < size; i++) arr[i] = Float.NaN;

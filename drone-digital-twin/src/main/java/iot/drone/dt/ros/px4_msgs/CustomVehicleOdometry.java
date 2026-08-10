@@ -4,7 +4,7 @@ package iot.drone.dt.ros.px4_msgs;
 import io.github.twinklekhj.ros.type.RosMessage;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import iot.drone.dt.utils.Components3D;
+import iot.drone.dt.utils.Vector3D;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -57,10 +57,10 @@ public class CustomVehicleOdometry extends RosMessage {
         JsonObject obj = new JsonObject()
                 .put(FIELD_TIMESTAMP, timestamp)
                 .put(FIELD_TIMESTAMP_SAMPLE, timestampSample)
-                .put(FIELD_POSITION, floatArrayToJsonArray(position))           // ✅ Corretto
-                .put(FIELD_Q, floatArrayToJsonArray(q))                         // ✅ Corretto
-                .put(FIELD_VELOCITY, floatArrayToJsonArray(velocity))           // ✅ Corretto
-                .put(FIELD_ANGULAR_VELOCITY, floatArrayToJsonArray(angularVelocity)) // ✅ Corretto
+                .put(FIELD_POSITION, floatArrayToJsonArray(position))
+                .put(FIELD_Q, floatArrayToJsonArray(q))
+                .put(FIELD_VELOCITY, floatArrayToJsonArray(velocity))
+                .put(FIELD_ANGULAR_VELOCITY, floatArrayToJsonArray(angularVelocity))
                 .put(FIELD_POSE_FRAME, poseFrame)
                 .put(FIELD_VELOCITY_FRAME, velocityFrame)
                 .put(FIELD_SEQUENCE, seq);
@@ -100,7 +100,7 @@ public class CustomVehicleOdometry extends RosMessage {
                 this.angularVelocity.clone(), this.poseFrame, this.velocityFrame, this.seq);
     }
 
-    // Helper interno per la conversione da JsonArray a float[]
+    // Internal helper for converting a JsonArray to a float[]
     private static float[] toFloatArray(JsonArray array, int size) {
         float[] result = new float[size];
         if (array != null) {
@@ -112,8 +112,8 @@ public class CustomVehicleOdometry extends RosMessage {
     }
 
     /**
-     * Restituisce i nomi delle colonne per il CSV.
-     * Gli array vengono espansi (es: position.x, position.y, position.z).
+     * Returns the column names for the CSV.
+     * Array fields are expanded (e.g., position.x, position.y, position.z).
      */
     public List<String> getLabels() {
         return Arrays.asList(
@@ -130,7 +130,7 @@ public class CustomVehicleOdometry extends RosMessage {
     }
 
     /**
-     * Restituisce i valori correnti pronti per essere scritti in una riga CSV.
+     * Returns the current values ready to be written to a CSV row.
      */
     public List<Object> getValues() {
         List<Object> values = new ArrayList<>();
@@ -138,13 +138,9 @@ public class CustomVehicleOdometry extends RosMessage {
         values.add(timestamp);
         values.add(timestampSample);
 
-        // Espansione Position
         for (float f : position) values.add(f);
-        // Espansione Quaternione
         for (float f : q) values.add(f);
-        // Espansione Velocity
         for (float f : velocity) values.add(f);
-        // Espansione Angular Velocity
         for (float f : angularVelocity) values.add(f);
 
         values.add(poseFrame);
@@ -154,7 +150,7 @@ public class CustomVehicleOdometry extends RosMessage {
     }
 
     /**
-     * Converte un array float[] primitivo in JsonArray di Vert.x
+     * Converts a primitive float[] array into a Vert.x JsonArray.
      */
     private static JsonArray floatArrayToJsonArray(float[] array) {
         JsonArray jsonArr = new JsonArray();
@@ -166,38 +162,24 @@ public class CustomVehicleOdometry extends RosMessage {
         return jsonArr;
     }
 
-    // ... (all'interno di CustomVehicleOdometry)
-
     /**
-     * Estrae la posizione e la converte in un oggetto Components3D (o Components3D).
+     * Extracts the position and converts it into a Vector3D object.
      */
-    public Components3D getPositionAsArray() {
+    public Vector3D getPositionAsArray() {
         if (this.position != null && this.position.length >= 3) {
-            return new Components3D(this.position[0], this.position[1], this.position[2]);
+            return new Vector3D(this.position[0], this.position[1], this.position[2]);
         }
-        return new Components3D(); // Ritorna (0,0,0) o NaN se preferisci
+        return new Vector3D(); // Ritorna (0,0,0) o NaN se preferisci
     }
 
     /**
-     * Estrae la velocità e la converte in un oggetto Components3D (o Components3D).
+     * Extracts the velocity and converts it into a Vector3D object.
      */
-    public Components3D getVelocityAsArray() {
+    public Vector3D getVelocityAsArray() {
         if (this.velocity != null && this.velocity.length >= 3) {
-            return new Components3D(this.velocity[0], this.velocity[1], this.velocity[2]);
+            return new Vector3D(this.velocity[0], this.velocity[1], this.velocity[2]);
         }
-        return new Components3D();
+        return new Vector3D();
     }
 }
-
-/* Esempio utilizzo getLabels e getValues
-CustomVehicleOdometry msg = ...
-
-// Per l'header del file (solo la prima volta)
-String header = String.join(",", msg.getLabels());
-
-// Per ogni riga di dati
-String row = msg.getValues().stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(","));
- */
 

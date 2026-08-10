@@ -106,13 +106,6 @@ public class WebSocketRosPhysicalAdapterConfiguration {
         return addPhysicalAssetAction(actionKey, type, contentType);
     }
 
-    /* Modifiche per gestione Request/Response
-
-    public WebSocketRosPhysicalAdapterConfiguration addPhysicalAssetActionMethod(String actionKey, String type, String contentType, Function<Void, String> sendFunctions){
-        this.outgoingMessages.put(actionKey, sendFunctions);
-        return addPhysicalAssetAction(actionKey, type, contentType);
-    }
-*/
     public <T> WebSocketRosPhysicalAdapterConfiguration addPhysicalAssetPropertyTopic(String propertyKey, T initialValue, DigitalTwinRosTopic digitalTwinRosTopic){
         this.incomingMessages.put(propertyKey, digitalTwinRosTopic);
         return addPhysicalAssetProperty(propertyKey, initialValue);

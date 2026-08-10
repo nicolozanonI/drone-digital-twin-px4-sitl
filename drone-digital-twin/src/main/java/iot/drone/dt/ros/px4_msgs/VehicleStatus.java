@@ -339,18 +339,3 @@ public class VehicleStatus extends RosMessage {
                 this.failsafeDeferState, this.hilState);
     }
 }
-
-/*
-// Esempio di utilizzo
-VehicleStatus status = VehicleStatus.fromJsonString(jsonString);
-
-// Ottenere descrizioni leggibili
-System.out.println("Stato armamento: " + status.getArmingStateDescription());
-// Output: "ARMED"
-
-System.out.println("Modalità navigazione: " + status.getNavStateDescription());
-// Output: "OFFBOARD"
-
-// Output completo per debug
-System.out.println(status.toDetailedString());
- */

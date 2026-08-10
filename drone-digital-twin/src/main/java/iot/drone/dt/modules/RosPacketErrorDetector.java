@@ -10,66 +10,18 @@ import java.util.Set;
 
 public class RosPacketErrorDetector {
 
-    /*
-     * Stato per topic.
-     *
-     * Usiamo il topic come chiave perché odometry e status hanno sequence
-     * indipendenti. Se usassi una chiave unica, i topic si disturberebbero
-     * tra loro.
-     */
     private final Map<String, Long> lastSequenceNumbers = new HashMap<>();
     private final Map<String, Long> lastTimestamps = new HashMap<>();
 
-    /*
-     * Soglie.
-     *
-     * Il forwarder, per simulare delay, sottrae circa 1000-5000 ms
-     * dal timestamp del messaggio. Quindi se il timestamp torna indietro
-     * più di 100 ms lo consideriamo delayed.
-     */
     private static final long TIMESTAMP_BACKWARD_THRESHOLD_MICROS = 100_000L;
 
-    /*
-     * Salto massimo di sequenza accettato prima di considerarlo anomalo.
-     * Questo intercetta buchi molto grandi. I drop piccoli invece non
-     * vengono necessariamente classificati come OUT_OF_SEQUENCE.
-     */
     private static final long MAX_SEQ_JUMP = 100;
 
-    /*
-     * Il forwarder genera CORRUPT_TS(future) con circa +10000 secondi.
-     * Questa soglia serve a rilevarlo.
-     *
-     * Se le macchine sono molto desincronizzate, puoi aumentarla.
-     * Deve comunque rimanere molto minore di 10000 se vuoi intercettare
-     * la corruzione future del forwarder.
-     */
     private static final long MAX_FUTURE_TIMESTAMP_SECONDS = 300L;
 
-    /*
-     * Range temporale robusto.
-     *
-     * Il forwarder genera:
-     * - year2000 = 946684800000000 us
-     * - year3000 = 32503680000000000 us
-     *
-     * Con year2020 come minimo, year2000 viene correttamente invalidato.
-     */
     private static final long YEAR_2020_SECONDS = 1577836800L;
     private static final long YEAR_2100_SECONDS = 4102444800L;
 
-    /*
-     * Soglie coerenti con il forwarder:
-     *
-     * corrupt_data_odom:
-     * - position[0] = 1e9f
-     * - position[1] = -1e9f
-     * - velocity[0] = 1e6f
-     * - velocity[1] = -1e6f
-     * - velocity[2] = 1e6f
-     *
-     * Quindi bisogna usare >=, non >.
-     */
     private static final double MAX_ABS_POSITION = 1e9;
     private static final double MAX_ABS_VELOCITY = 1e6;
 
@@ -108,10 +60,6 @@ public class RosPacketErrorDetector {
         INVALID_STATE_VALUE
     }
 
-    // ============================================================
-    // Interfaccia pubblica
-    // ============================================================
-
     public boolean hasProblems(String raw, String topic) {
         return validateMessage(raw, topic) != ValidationResult.VALID;
     }
@@ -144,7 +92,7 @@ public class RosPacketErrorDetector {
         }
 
         // ========================================================
-        // 1. Validazioni base
+        // 1. Sequence number and Timestamp corruption detection
         // ========================================================
 
         Long seq = getLongField(msg, "seq");
@@ -152,10 +100,6 @@ public class RosPacketErrorDetector {
             return ValidationResult.CORRUPTED;
         }
 
-        /*
-         * Coerente con forwarder:
-         * corrupt_header_* può impostare seq = 4294967295.
-         */
         if (seq < 0 || seq == 4294967295L) {
             return ValidationResult.CORRUPTED;
         }
@@ -166,7 +110,7 @@ public class RosPacketErrorDetector {
         }
 
         // ========================================================
-        // 2. Validazione timestamp assoluta
+        // 2. Timestamp validation
         // ========================================================
 
         ValidationResult tsResult = validateTimestamp(timestamp);
@@ -175,7 +119,7 @@ public class RosPacketErrorDetector {
         }
 
         // ========================================================
-        // 3. Validazioni specifiche messaggio
+        // 3. Message fields corruption detection
         // ========================================================
 
         if (hasAnyField(msg, ODOMETRY_FIELDS)) {
@@ -193,7 +137,7 @@ public class RosPacketErrorDetector {
         }
 
         // ========================================================
-        // 4. Tracking sequenza/timestamp
+        // 4. Tracking sequence/timestamp
         // ========================================================
 
         ValidationResult seqResult =
@@ -218,21 +162,10 @@ public class RosPacketErrorDetector {
         long tsSecs = timestampMicros / 1_000_000L;
         long nowSecs = Instant.now().getEpochSecond();
 
-        /*
-         * Intercetta:
-         * - CORRUPT_TS(year2000)
-         * - CORRUPT_TS(year3000)
-         */
         if (tsSecs < YEAR_2020_SECONDS || tsSecs >= YEAR_2100_SECONDS) {
             return ValidationResult.INVALID_TIMESTAMP;
         }
 
-        /*
-         * Intercetta:
-         * - CORRUPT_TS(future)
-         *
-         * Il forwarder usa now + 10000 secondi.
-         */
         if (tsSecs > nowSecs + MAX_FUTURE_TIMESTAMP_SECONDS) {
             return ValidationResult.INVALID_TIMESTAMP;
         }
@@ -241,7 +174,7 @@ public class RosPacketErrorDetector {
     }
 
     // ============================================================
-    // Sequenza + timestamp relativo
+    // Method to validate sequence + timestamp
     // ============================================================
 
     private ValidationResult validateSequenceWithTimestamp(
@@ -261,12 +194,6 @@ public class RosPacketErrorDetector {
         ValidationResult result =
                 computeSequenceResult(seq, timestamp, lastSeq, lastTs);
 
-        /*
-         * Aggiorniamo comunque lo stato per risincronizzarci.
-         *
-         * Nota: questa funzione viene chiamata solo dopo che timestamp
-         * assoluto e campi strutturali sono risultati validi.
-         */
         lastSequenceNumbers.put(topicName, seq);
         lastTimestamps.put(topicName, timestamp);
 
@@ -279,11 +206,6 @@ public class RosPacketErrorDetector {
             long lastSeq,
             long lastTs
     ) {
-        /*
-         * Se il timestamp è uguale, il forwarder probabilmente sta
-         * ripubblicando lo stesso ultimo messaggio PX4 con seq custom diverso.
-         * Questo è normale nel tuo schema timer-based.
-         */
         if (timestamp == lastTs) {
             if (seq < lastSeq) {
                 return ValidationResult.OUT_OF_SEQUENCE;
@@ -293,19 +215,10 @@ public class RosPacketErrorDetector {
 
         long deltaTs = timestamp - lastTs;
 
-        /*
-         * Coerente con make_delayed_odom/status:
-         * il forwarder sottrae millisecondi dal timestamp.
-         */
         if (deltaTs < -TIMESTAMP_BACKWARD_THRESHOLD_MICROS) {
             return ValidationResult.DELAYED_TIMESTAMP;
         }
 
-        /*
-         * Coerente con out_of_sequence:
-         * un messaggio vecchio viene pubblicato dopo messaggi più nuovi,
-         * quindi la seq può tornare indietro.
-         */
         if (seq < lastSeq && seq != 0) {
             if (lastSeq > 4_000_000_000L && seq < 1000) {
                 return ValidationResult.VALID;
@@ -314,10 +227,6 @@ public class RosPacketErrorDetector {
             return ValidationResult.OUT_OF_SEQUENCE;
         }
 
-        /*
-         * Salto enorme in avanti.
-         * Questo può indicare perdita di molti messaggi o reset anomalo.
-         */
         if (seq > lastSeq + MAX_SEQ_JUMP) {
             return ValidationResult.OUT_OF_SEQUENCE;
         }
@@ -330,10 +239,7 @@ public class RosPacketErrorDetector {
     // ============================================================
 
     private ValidationResult validateOdometryFields(JsonObject msg) {
-        /*
-         * forwarder corrupt_header_odom:
-         * - timestamp_sample tra 1000 e 2000
-         */
+
         if (msg.containsKey("timestamp_sample")) {
             Long tsSample = getLongField(msg, "timestamp_sample");
 
@@ -342,11 +248,6 @@ public class RosPacketErrorDetector {
             }
         }
 
-        /*
-         * forwarder corrupt_header_odom:
-         * - pose_frame = 0
-         * - velocity_frame = 0
-         */
         if (msg.containsKey("pose_frame")) {
             Integer poseFrame = getIntegerField(msg, "pose_frame");
 
@@ -363,11 +264,6 @@ public class RosPacketErrorDetector {
             }
         }
 
-        /*
-         * forwarder corrupt_data_odom:
-         * - position NaN
-         * - position huge +/-1e9
-         */
         ValidationResult positionResult =
                 validateNumericArray(msg, "position", MAX_ABS_POSITION, true);
 
@@ -375,20 +271,11 @@ public class RosPacketErrorDetector {
             return positionResult;
         }
 
-        /*
-         * forwarder corrupt_data_odom:
-         * - bad_quaternion = [0,0,0,0]
-         */
         ValidationResult qResult = validateQuaternion(msg);
         if (qResult != ValidationResult.VALID) {
             return qResult;
         }
 
-        /*
-         * forwarder corrupt_data_odom:
-         * - velocity NaN
-         * - velocity huge +/-1e6
-         */
         ValidationResult velocityResult =
                 validateNumericArray(msg, "velocity", MAX_ABS_VELOCITY, true);
 
@@ -403,10 +290,6 @@ public class RosPacketErrorDetector {
             return angularVelocityResult;
         }
 
-        /*
-         * Anche le varianze dovrebbero essere finite se presenti.
-         * Non imposto soglie strette, ma intercetto NaN/Inf.
-         */
         for (String field : new String[]{
                 "position_variance",
                 "orientation_variance",
@@ -449,9 +332,6 @@ public class RosPacketErrorDetector {
 
             double norm = Math.sqrt(normSq);
 
-            /*
-             * Il forwarder bad_quaternion produce norm = 0.
-             */
             if (Math.abs(norm - 1.0) > 0.15) {
                 return ValidationResult.CORRUPTED;
             }
@@ -512,10 +392,7 @@ public class RosPacketErrorDetector {
     // ============================================================
 
     private ValidationResult validateStatusFields(JsonObject msg) {
-        /*
-         * forwarder corrupt_header_status:
-         * - nav_state = 255
-         */
+
         if (msg.containsKey("nav_state")) {
             Integer navState = getIntegerField(msg, "nav_state");
 
@@ -532,10 +409,7 @@ public class RosPacketErrorDetector {
             }
         }
 
-        /*
-         * forwarder corrupt_header_status:
-         * - arming_state = 255
-         */
+
         if (msg.containsKey("arming_state")) {
             Integer armingState = getIntegerField(msg, "arming_state");
 
@@ -547,16 +421,8 @@ public class RosPacketErrorDetector {
                 return ValidationResult.CORRUPTED;
             }
 
-            /*
-             * Non restringo troppo il range perché dipende dalla definizione
-             * PX4 usata dalla tua versione. Intercetto il valore sentinella 255.
-             */
         }
 
-        /*
-         * forwarder corrupt_data_status:
-         * - hil_state = 255
-         */
         if (msg.containsKey("hil_state")) {
             Integer hilState = getIntegerField(msg, "hil_state");
 
@@ -564,11 +430,6 @@ public class RosPacketErrorDetector {
                 return ValidationResult.CORRUPTED;
             }
         }
-
-        /*
-         * forwarder corrupt_data_status:
-         * - vehicle_type = 255
-         */
         if (msg.containsKey("vehicle_type")) {
             Integer vehicleType = getIntegerField(msg, "vehicle_type");
 
@@ -577,12 +438,6 @@ public class RosPacketErrorDetector {
             }
         }
 
-        /*
-         * Questi campi booleani possono essere controllati solo per tipo.
-         *
-         * Se il forwarder li inverte, il pacchetto rimane formalmente valido:
-         * failsafe = !failsafe è comunque un boolean.
-         */
         for (String f : new String[]{
                 "failsafe",
                 "pre_flight_checks_pass",
@@ -603,7 +458,7 @@ public class RosPacketErrorDetector {
     }
 
     // ============================================================
-    // Helper JSON robusti
+    // Helper JSON
     // ============================================================
 
     private boolean hasAnyField(JsonObject msg, Set<String> fields) {
@@ -683,7 +538,7 @@ public class RosPacketErrorDetector {
     }
 
     // ============================================================
-    // Utility pubbliche
+    // Utils
     // ============================================================
 
     public String messageValidationResult(String raw, String topic) {
