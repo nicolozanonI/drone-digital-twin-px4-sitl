@@ -251,7 +251,7 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
             throw new RuntimeException(e);
         }
 
-        try {
+        /*try {
             PhysicalAssetProperty<Components3D> physicalAssetProperty = new PhysicalAssetProperty<>("position", new Components3D(0.0,0.0,0.0));
             this.digitalTwinStateManager.createProperty(new DigitalTwinStateProperty<>(physicalAssetProperty.getKey(),
                     physicalAssetProperty.getInitialValue()));
@@ -267,7 +267,7 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
             this.observePhysicalAssetProperty(physicalAssetProperty);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
 
         try {
@@ -387,7 +387,7 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
                                         physicalAssetPropertyWldtEvent.getBody()));
                         this.digitalTwinStateManager.commitStateTransaction();
                         break;
-                    case "odometry":
+                    /*case "odometry":
                         this.digitalTwinStateManager.startStateTransaction();
                         CustomVehicleOdometry odometry = CustomVehicleOdometry.fromJsonObject((JsonObject) physicalAssetPropertyWldtEvent.getBody());
                         Components3D position = odometry.getPositionAsArray();
@@ -411,7 +411,7 @@ public class DroneDigitalTwinShadowingFunction extends DigitalTwinModel{
 
                         // Heartbeat
                         this.odteManager.incrementHeartbeatsCounter();
-                        break;
+                        break;*/
                     default:
                         this.digitalTwinStateManager.startStateTransaction();
                         this.digitalTwinStateManager.updateProperty(

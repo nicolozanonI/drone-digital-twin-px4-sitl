@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 
+
 public class WebSocketRosPhysicalAdapterConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketRosPhysicalAdapterConfiguration.class);
@@ -112,9 +113,16 @@ public class WebSocketRosPhysicalAdapterConfiguration {
         return addPhysicalAssetAction(actionKey, type, contentType);
     }
 */
-    public <T> WebSocketRosPhysicalAdapterConfiguration addPhysicalAssetPropertyTopic(String actionKey, T initialValue, DigitalTwinRosTopic digitalTwinRosTopic){
-        this.incomingMessages.put(actionKey, digitalTwinRosTopic);
-        return addPhysicalAssetProperty(actionKey, initialValue);
+    public <T> WebSocketRosPhysicalAdapterConfiguration addPhysicalAssetPropertyTopic(String propertyKey, T initialValue, DigitalTwinRosTopic digitalTwinRosTopic){
+        this.incomingMessages.put(propertyKey, digitalTwinRosTopic);
+        return addPhysicalAssetProperty(propertyKey, initialValue);
+    }
+
+    public <T> WebSocketRosPhysicalAdapterConfiguration addMultiplePhysicalAssetPropertyTopics(Map<String, T> keyValueMap, DigitalTwinRosTopic digitalTwinRosTopic) {
+        for (String propertyKey : keyValueMap.keySet()) {
+            this.incomingMessages.put(propertyKey, digitalTwinRosTopic);
+        }
+        return addMultiplePhysicalAssetProperties(keyValueMap);
     }
 
     public <T> WebSocketRosPhysicalAdapterConfiguration addPhysicalAssetEventTopic(String eventKey, String type, DigitalTwinRosTopic digitalTwinRosTopic){
@@ -140,6 +148,12 @@ public class WebSocketRosPhysicalAdapterConfiguration {
         return this;
     }
 
+    private <T> WebSocketRosPhysicalAdapterConfiguration addMultiplePhysicalAssetProperties(Map<String, T> keyValuePairs) {
+        for (Map.Entry<String, T> entry : keyValuePairs.entrySet()) {
+            this.properties.add(new PhysicalAssetProperty<>(entry.getKey(), entry.getValue()));
+        }
+        return this;
+    }
 
     private <T> WebSocketRosPhysicalAdapterConfiguration addPhysicalAssetProperty(String key, T initialValue){
         this.properties.add(new PhysicalAssetProperty<>(key, initialValue));
@@ -155,7 +169,5 @@ public class WebSocketRosPhysicalAdapterConfiguration {
         this.setPhysicalAssetDescription(actions, properties, events);
         return this;
     }
-
-
 
 }

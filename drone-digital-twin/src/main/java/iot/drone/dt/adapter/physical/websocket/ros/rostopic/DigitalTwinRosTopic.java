@@ -4,6 +4,8 @@ import io.github.twinklekhj.ros.op.RosSubscription;
 import io.vertx.core.json.JsonObject;
 import it.wldt.core.event.WldtEvent;
 
+import java.util.List;
+
 public class DigitalTwinRosTopic {
 
 
@@ -20,7 +22,7 @@ public class DigitalTwinRosTopic {
         this.rosTopicSubscribeFunction = rosTopicSubscribeFunction;
     }
 
-    public WldtEvent<?> applySubscribeFunction(JsonObject topicMessagePayload){
+    public List<WldtEvent<?>> applySubscribeFunction(JsonObject topicMessagePayload){
         return rosTopicSubscribeFunction.apply(topicMessagePayload);
     }
 

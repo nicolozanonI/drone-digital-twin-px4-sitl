@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Random;
 
 public class WebSocketRosPhysicalAdapter extends ConfigurablePhysicalAdapter<WebSocketRosPhysicalAdapterConfiguration> {
@@ -124,21 +125,29 @@ public class WebSocketRosPhysicalAdapter extends ConfigurablePhysicalAdapter<Web
     }
 
     private void subscribeClientToDigitalTwinIncomingTopic(String s, DigitalTwinRosTopic digitalTwinRosTopic) {
+        getConfiguration().getWebSocketAdapterClient().getBridge().subscribe(
+                digitalTwinRosTopic.getRosSubscription(),
+                message -> {
+                    List<WldtEvent<?>> wldtEvents = digitalTwinRosTopic.applySubscribeFunction(message.body());
+                    if (wldtEvents == null) {
+                        logger.error("applySubscribeFunction returned null for topic {}", s);
+                        return;
+                    }
 
-        getConfiguration().getWebSocketAdapterClient().getBridge().subscribe(digitalTwinRosTopic.getRosSubscription(), message -> {
-            WldtEvent<?> wldtEvent = digitalTwinRosTopic.applySubscribeFunction(message.body());
-            logger.info("MESSAGE ARRIVED ON {} TOPIC", s);
-            try {
-                if(wldtEvent instanceof PhysicalAssetPropertyWldtEvent){
-                    publishPhysicalAssetPropertyWldtEvent((PhysicalAssetPropertyWldtEvent<?>) wldtEvent);
-                } else if(wldtEvent instanceof PhysicalAssetEventWldtEvent){
-                    publishPhysicalAssetEventWldtEvent((PhysicalAssetEventWldtEvent<?>) wldtEvent);
+                    wldtEvents.forEach(event -> {
+                        logger.info("MESSAGE ARRIVED ON {} TOPIC", s);
+                        try {
+                            if (event instanceof PhysicalAssetPropertyWldtEvent) {
+                                publishPhysicalAssetPropertyWldtEvent((PhysicalAssetPropertyWldtEvent<?>) event);
+                            } else if (event instanceof PhysicalAssetEventWldtEvent) {
+                                publishPhysicalAssetEventWldtEvent((PhysicalAssetEventWldtEvent<?>) event);
+                            }
+                        } catch (EventBusException ex) {
+                            ex.printStackTrace();
+                        }
+                    });
                 }
-
-            } catch (EventBusException ex) {
-                ex.printStackTrace();
-            }
-        });
+        );
     }
 
     @Override

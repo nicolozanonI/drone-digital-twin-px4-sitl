@@ -14,6 +14,7 @@ import iot.drone.dt.modules.RosPacketErrorDetector;
 import iot.drone.dt.ros.RosCommands;
 import iot.drone.dt.ros.px4_msgs.CustomVehicleOdometry;
 import iot.drone.dt.ros.px4_msgs.CustomVehicleStatus;
+import iot.drone.dt.utils.Components3D;
 import iot.drone.dt.utils.TimestampedNotification;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapter;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapterConfiguration;
@@ -31,6 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class DroneDigitalTwin {
@@ -134,8 +138,13 @@ public class DroneDigitalTwin {
             RosSubscription vehicleOdometryTopic = RosSubscription.builder(SIMULATED_DRONE_ID + "/forwarder/vehicle/odometry",
                     CustomVehicleOdometry.TYPE).queueLength(0).throttleRate(50).build();
             DigitalTwinRosTopic odometryTopic = new DigitalTwinRosTopic(vehicleOdometryTopic, getVehicleOdometry(odteManager, rosPacketErrorDetector));
-            PhysicalAdapter1Config.addPhysicalAssetPropertyTopic("odometry",
-                    new CustomVehicleOdometry(), odometryTopic);
+            /*PhysicalAdapter1Config.addPhysicalAssetPropertyTopic("odometry",
+                    new CustomVehicleOdometry(), odometryTopic);*/
+            Map<String, Integer> odometry = new HashMap<>();
+            odometry.put("position", 0);
+            odometry.put("velocity", 0);
+
+            PhysicalAdapter1Config.addMultiplePhysicalAssetPropertyTopics(odometry, odometryTopic);
 
             RosSubscription vehicleStatusSubscription = RosSubscription.builder(SIMULATED_DRONE_ID + "/forwarder/vehicle/status",
                     CustomVehicleStatus.TYPE).queueLength(0).throttleRate(50).build();
@@ -202,7 +211,8 @@ public class DroneDigitalTwin {
             RosPacketErrorDetector rosPacketErrorDetector
     ) {
         return msgPayload -> {
-            WldtEvent<?> event = null;
+            WldtEvent<?> positionEvent = null;
+            WldtEvent<?> velocityEvent = null;
             odteManager.incrementTotalPacketsCounter();
 
             String validationResult = rosPacketErrorDetector.messageValidationResult(
@@ -219,9 +229,22 @@ public class DroneDigitalTwin {
                             CustomVehicleOdometry.fromJsonObject(msgPayload);
 
                     try {
-                        event = new PhysicalAssetPropertyWldtEvent<JsonObject>(
-                                "odometry",
-                                customVehicleOdometry.getJsonObject()
+                        Components3D position = customVehicleOdometry.getPositionAsArray();
+                        //double posX = position.getX();
+                        //double posY = position.getY();
+                        //double posZ = position.getZ();
+
+                        Components3D velocity = customVehicleOdometry.getVelocityAsArray();
+                        //double velX = velocity.getX();
+                        //double velY = velocity.getY();
+                        //double velZ = velocity.getZ();
+                        positionEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
+                                "position",
+                                position.getJsonObject()
+                        );
+                        velocityEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
+                                "velocity",
+                                velocity.getJsonObject()
                         );
                     } catch (EventBusException e) {
                         e.printStackTrace();
@@ -268,7 +291,8 @@ public class DroneDigitalTwin {
                     break;
                 }
             }
-            return event;
+            List<WldtEvent<?>> events = List.of(positionEvent, velocityEvent);
+            return events;
         };
     }
 
@@ -277,8 +301,7 @@ public class DroneDigitalTwin {
             RosPacketErrorDetector rosPacketErrorDetector
     ) {
         return msgPayload -> {
-            WldtEvent<?> event = null;
-
+            WldtEvent<?> statusEvent = null;
 
             odteManager.incrementTotalPacketsCounter();
 
@@ -301,7 +324,7 @@ public class DroneDigitalTwin {
                     String status = customVehicleStatus.getStatusSummary();
 
                     try {
-                        event = new PhysicalAssetPropertyWldtEvent<String>(
+                        statusEvent = new PhysicalAssetPropertyWldtEvent<String>(
                                 "status",
                                 status
                         );
@@ -353,8 +376,8 @@ public class DroneDigitalTwin {
                     break;
                 }
             }
-
-            return event;
+            List<WldtEvent<?>> events = List.of(statusEvent);
+            return events;
         };
     }
 
