@@ -88,3 +88,84 @@ ros2 launch rosbridge_server rosbridge_websocket_launch.xml port:=9090
 ```
 
 By default, rosbridge will expose a WebSocket endpoint on port `9090`, allowing external applications to communicate with ROS 2 through the Rosbridge protocol.
+
+
+## Starting the Drone Digital Twin
+
+To start the Drone Digital Twin, just run the **DroneDigitalTwin** class located in /base directory. The Drone Digital Twin was implemented using [WLDT](https://wldt.github.io/) library:
+
+```bibtex
+@article{PICONE2021100661,
+    title = {WLDT: A general purpose library to build IoT digital twins},
+    journal = {SoftwareX},
+    volume = {13},
+    pages = {100661},
+    year = {2021},
+    issn = {2352-7110},
+    doi = {https://doi.org/10.1016/j.softx.2021.100661},
+    url = {https://www.sciencedirect.com/science/article/pii/S2352711021000066},
+    author = {Marco Picone and Marco Mamei and Franco Zambonelli},
+    keywords = {Internet of Things, Digital twin, Library, Software agent}
+}
+```
+```bibtex
+@INPROCEEDINGS{PICONE2025DCOSS,
+  author={Picone, Marco and Martinelli, Matteo and Burattini, Samuele and Giulianelli, Andrea and Ricci, Alessandro},
+  booktitle={2025 21st International Conference on Distributed Computing in Smart Systems and the Internet of Things (DCOSS-IoT)}, 
+  title={The Two Faces of Interoperability: Bridging Cyber and Physical Spaces with Digital Twins}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={1-8},
+  keywords={Adaptation models;Technological innovation;Protocols;Software architecture;Soft sensors;Semantics;Smart systems;Digital twins;Interoperability;Standards;Digital Twins;Industrial Internet of Things;Cyber-Physical Systems;Interoperability},
+  doi={10.1109/DCOSS-IoT65416.2025.00078}}
+```
+
+The Drone DT has the following Adapters:
+* One Physical Adapter, called Rosbridge Physical Adapter, used to comunicate with the simulated drone.
+* One HTTP DIgital Adapter, used to receive external commands sent with HTTP protocol and expose properties and events.
+* One MQTT Digital Adapter, used to receive external commands sent with MQTT protocol and publish properties and events.
+
+# Available Commands
+
+## Arm the Vehicle
+
+To arm the drone, send an HTTP POST request to the following endpoint:
+
+```http
+POST http://localhost:3001/state/actions/arm
+```
+
+Example using curl:
+
+```bash
+curl -X POST http://localhost:3001/state/actions/arm
+```
+
+## Take off
+
+To take off the drone, send an HTTP POST request to the following endpoint:
+
+```http
+POST http://localhost:3001/state/actions/takeoff
+```
+
+Example using curl:
+
+```bash
+curl -X POST http://localhost:3001/state/actions/takeoff
+```
+
+## Land
+
+To land the drone, send an HTTP POST request to the following endpoint:
+
+```http
+POST http://localhost:3001/state/actions/land
+```
+
+Example using curl:
+
+```bash
+curl -X POST http://localhost:3001/state/actions/land
+```
