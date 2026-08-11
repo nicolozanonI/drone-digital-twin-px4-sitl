@@ -87,6 +87,24 @@
             <artifactId>mqtt-digital-adapter</artifactId>
             <version>0.1.2</version>
         </dependency>
+        <!-- Gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.14.0</version>
+        </dependency>
+        <!-- SLF4J API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.18</version>
+        </dependency>
+        <!-- SLF4J Implementation (required to see logs outputted) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.18</version>
+        </dependency>
 
 
     </dependencies>
