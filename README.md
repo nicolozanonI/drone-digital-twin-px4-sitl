@@ -92,7 +92,7 @@ By default, rosbridge will expose a WebSocket endpoint on port `9090`, allowing 
 
 ## Starting the Drone Digital Twin
 
-To start the Drone Digital Twin, just run the **DroneDigitalTwin** class located in /base directory. The Drone Digital Twin was implemented using [WLDT](https://wldt.github.io/) library:
+To start the Drone Digital Twin, just run the **DroneDigitalTwin** class located in /base directory. The Drone DT was implemented using [WLDT](https://wldt.github.io/) library:
 
 ```bibtex
 @article{PICONE2021100661,
@@ -156,6 +156,107 @@ Example using curl:
 curl -X POST http://localhost:3001/state/actions/takeoff
 ```
 
+## Set a Target Pose
+
+To command the drone to move to a single target position, send an HTTP POST request to the `/pose` endpoint.
+
+```http
+POST http://localhost:3000/pose
+```
+
+### Request Body
+
+```json
+{
+    "x": 2.5,
+    "y": 2.5,
+    "z": -5.0
+}
+```
+
+### Example using curl
+
+```bash
+curl -X POST http://localhost:3000/pose \
+-H "Content-Type: application/json" \
+-d '{
+    "x": 2.5,
+    "y": 2.5,
+    "z": -5.0
+}'
+```
+
+The target pose is expressed in the local NED frame:
+
+- `x`: North position (meters)
+- `y`: East position (meters)
+- `z`: Down position (meters, therefore negative values correspond to altitude above the origin)
+
+The vehicle will fly directly to the specified position.
+
+## Execute a Waypoint Trajectory
+
+To command the drone to follow a trajectory defined by a sequence of waypoints, send an HTTP POST request to the `/waypoints` endpoint.
+
+```http
+POST http://localhost:3000/waypoints
+```
+
+### Request Body
+
+```json
+[
+  {
+    "x": 0.0,
+    "y": 0.0,
+    "z": -5.0
+  },
+  {
+    "x": 2.5,
+    "y": 2.5,
+    "z": -6.0
+  },
+  {
+    "x": 5.0,
+    "y": 0.0,
+    "z": -7.0
+  }
+]
+```
+
+### Example using curl
+
+```bash
+curl -X POST http://localhost:3000/waypoints \
+-H "Content-Type: application/json" \
+-d '[
+    {
+        "x": 0.0,
+        "y": 0.0,
+        "z": -5.0
+    },
+    {
+        "x": 2.5,
+        "y": 2.5,
+        "z": -6.0
+    },
+    {
+        "x": 5.0,
+        "y": 0.0,
+        "z": -7.0
+    }
+]'
+```
+
+Each waypoint is defined by its position in the local NED frame:
+
+- `x`: North position (meters)
+- `y`: East position (meters)
+- `z`: Down position (meters, therefore negative values correspond to altitude above the origin)
+
+The vehicle will sequentially navigate through all the provided waypoints.
+
+
 ## Land
 
 To land the drone, send an HTTP POST request to the following endpoint:
@@ -169,3 +270,6 @@ Example using curl:
 ```bash
 curl -X POST http://localhost:3001/state/actions/land
 ```
+
+
+
