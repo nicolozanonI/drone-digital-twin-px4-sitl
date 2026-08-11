@@ -3,6 +3,7 @@ package iot.drone.dt.ros.px4_msgs;
 import io.github.twinklekhj.ros.type.RosMessage;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import iot.drone.dt.utils.Vector3D;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -48,10 +49,10 @@ public class VehicleOdometry extends RosMessage {
         JsonObject obj = new JsonObject()
                 .put(FIELD_TIMESTAMP, timestamp)
                 .put(FIELD_TIMESTAMP_SAMPLE, timestampSample)
-                .put(FIELD_POSITION, new JsonArray().addAll(new JsonObject().put("list", position).getJsonArray("list"))) // Helper logico per array
-                .put(FIELD_Q, new JsonArray().addAll(new JsonObject().put("list", q).getJsonArray("list")))
-                .put(FIELD_VELOCITY, new JsonArray().addAll(new JsonObject().put("list", velocity).getJsonArray("list")))
-                .put(FIELD_ANGULAR_VELOCITY, new JsonArray().addAll(new JsonObject().put("list", angularVelocity).getJsonArray("list")))
+                .put(FIELD_POSITION, floatArrayToJsonArray(position))  // Usa il metodo helper
+                .put(FIELD_Q, floatArrayToJsonArray(q))
+                .put(FIELD_VELOCITY, floatArrayToJsonArray(velocity))
+                .put(FIELD_ANGULAR_VELOCITY, floatArrayToJsonArray(angularVelocity))
                 .put(FIELD_POSE_FRAME, poseFrame)
                 .put(FIELD_VELOCITY_FRAME, velocityFrame);
 
@@ -98,5 +99,38 @@ public class VehicleOdometry extends RosMessage {
             }
         }
         return result;
+    }
+
+    /**
+     * Converts a primitive float[] array into a Vert.x JsonArray.
+     */
+    private static JsonArray floatArrayToJsonArray(float[] array) {
+        JsonArray jsonArr = new JsonArray();
+        if (array != null) {
+            for (float v : array) {
+                jsonArr.add(v);
+            }
+        }
+        return jsonArr;
+    }
+
+    /**
+     * Extracts the position and converts it into a Vector3D object.
+     */
+    public Vector3D getPositionAsArray() {
+        if (this.position != null && this.position.length >= 3) {
+            return new Vector3D(this.position[0], this.position[1], this.position[2]);
+        }
+        return new Vector3D(); // Ritorna (0,0,0) o NaN se preferisci
+    }
+
+    /**
+     * Extracts the velocity and converts it into a Vector3D object.
+     */
+    public Vector3D getVelocityAsArray() {
+        if (this.velocity != null && this.velocity.length >= 3) {
+            return new Vector3D(this.velocity[0], this.velocity[1], this.velocity[2]);
+        }
+        return new Vector3D();
     }
 }

@@ -10,8 +10,8 @@ import iot.drone.dt.adapter.physical.websocket.ros.exception.WebSocketRosPhysica
 import iot.drone.dt.adapter.physical.websocket.ros.rostopic.DigitalTwinRosTopic;
 import iot.drone.dt.adapter.physical.websocket.ros.rostopic.RosTopicSubscribeFunction;
 import iot.drone.dt.ros.RosCommands;
-import iot.drone.dt.ros.px4_msgs.CustomVehicleOdometry;
-import iot.drone.dt.ros.px4_msgs.CustomVehicleStatus;
+import iot.drone.dt.ros.px4_msgs.VehicleOdometry;
+import iot.drone.dt.ros.px4_msgs.VehicleStatus;
 import iot.drone.dt.utils.Vector3D;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapter;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapterConfiguration;
@@ -112,8 +112,8 @@ public class DroneDigitalTwin {
             PhysicalAdapter1Config.addPhysicalAssetActionMethod("disarm", "da.digital.action.event",
                     "byte", px4_disarm);
 
-            RosSubscription vehicleOdometryTopic = RosSubscription.builder(SIMULATED_DRONE_ID + "/fmu/out/vehicle/odometry",
-                    CustomVehicleOdometry.TYPE).queueLength(0).throttleRate(50).build();
+            RosSubscription vehicleOdometryTopic = RosSubscription.builder(SIMULATED_DRONE_ID + "/fmu/out/vehicle_odometry",
+                    VehicleOdometry.TYPE).queueLength(0).throttleRate(50).build();
             DigitalTwinRosTopic odometryTopic = new DigitalTwinRosTopic(vehicleOdometryTopic, getVehicleOdometry());
 
             Map<String, Integer> odometry = new HashMap<>();
@@ -121,11 +121,11 @@ public class DroneDigitalTwin {
             odometry.put("velocity", 0);
             PhysicalAdapter1Config.addMultiplePhysicalAssetPropertyTopics(odometry, odometryTopic);
 
-            RosSubscription vehicleStatusSubscription = RosSubscription.builder(SIMULATED_DRONE_ID + "/fmo/out/vehicle/status",
-                    CustomVehicleStatus.TYPE).queueLength(0).throttleRate(50).build();
+            RosSubscription vehicleStatusSubscription = RosSubscription.builder(SIMULATED_DRONE_ID + "/fmu/out/vehicle_status_v1",
+                    VehicleStatus.TYPE).queueLength(0).throttleRate(50).build();
             DigitalTwinRosTopic vehicleStatusTopic = new DigitalTwinRosTopic(vehicleStatusSubscription, getVehicleStatus());
             PhysicalAdapter1Config.addPhysicalAssetPropertyTopic("status",
-                    new CustomVehicleStatus(), vehicleStatusTopic);
+                    new VehicleStatus(), vehicleStatusTopic);
 
             PhysicalAdapter1Config.build();
 
@@ -176,13 +176,13 @@ public class DroneDigitalTwin {
         return msgPayload -> {
             WldtEvent<?> positionEvent = null;
             WldtEvent<?> velocityEvent = null;
-            CustomVehicleOdometry customVehicleOdometry =
-                    CustomVehicleOdometry.fromJsonObject(msgPayload);
+            VehicleOdometry vehicleOdometry =
+                    VehicleOdometry.fromJsonObject(msgPayload);
 
             try {
-                Vector3D position = customVehicleOdometry.getPositionAsArray();
+                Vector3D position = vehicleOdometry.getPositionAsArray();
 
-                Vector3D velocity = customVehicleOdometry.getVelocityAsArray();
+                Vector3D velocity = vehicleOdometry.getVelocityAsArray();
 
                 positionEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
                         "position",
@@ -204,10 +204,10 @@ public class DroneDigitalTwin {
         return msgPayload -> {
             WldtEvent<?> statusEvent = null;
 
-            CustomVehicleStatus customVehicleStatus =
-                    CustomVehicleStatus.fromJsonObject(msgPayload);
+            VehicleStatus vehicleStatus =
+                    VehicleStatus.fromJsonObject(msgPayload);
 
-            String status = customVehicleStatus.getStatusSummary();
+            String status = vehicleStatus.getStatusSummary();
 
             try {
                 statusEvent = new PhysicalAssetPropertyWldtEvent<String>(

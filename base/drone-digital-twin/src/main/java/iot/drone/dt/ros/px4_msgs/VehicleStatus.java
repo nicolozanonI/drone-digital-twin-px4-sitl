@@ -330,6 +330,44 @@ public class VehicleStatus extends RosMessage {
                 latestArmingReason, latestDisarmingReason, failsafeDeferState, hilState);
     }
 
+    /**
+     * Generates a concise summary of the current drone status.
+     * Format: "[FAILSAFE] [ARMING_STATE] - [NAVIGATION_STATE]"
+     */
+    public String getStatusSummary() {
+        StringBuilder sb = new StringBuilder();
+
+        // 1. Check failsafe status (highest priority)
+        if (failsafe) {
+            sb.append("[FAILSAFE] ");
+        }
+
+        // 2. Arming state
+        String armingDesc = getArmingStateDescription();
+        sb.append(armingDesc);
+
+        // 3. Separator and navigation mode
+        sb.append(" - ").append(getNavStateDescription());
+
+        // Optional: add reason details if disarmed or in failsafe mode
+        if (!isArmed() && latestDisarmingReason != 0) {
+            sb.append(" (Reason: ").append(getLatestDisarmingReasonDescription()).append(")");
+        } else if (failsafe) {
+
+            // You may want to include the failsafe type here if available.
+            // For now, keep it generic.
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Convenience helper to quickly determine whether the vehicle is armed.
+     */
+    public boolean isArmed() {
+        return this.armingState == ARMING_STATE_ARMED;
+    }
+
     @Override
     public VehicleStatus clone() {
         return new VehicleStatus(this.timestamp, this.armingState, this.navState,
