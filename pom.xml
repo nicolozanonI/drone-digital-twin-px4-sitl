@@ -17,7 +17,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>drone-digital-twin</module>
+        <module>entanglement/drone-digital-twin</module>
     </modules>
 
 </project>
