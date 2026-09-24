@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="cf743077-6edc-44ed-9461-2c08a8e7c2a5" name="Changes" comment="Changed digital twin model name">
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwin.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwinShadowingFunction.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwinModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/WebSocketRosPhysicalAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/WebSocketRosPhysicalAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/WebSocketRosPhysicalAdapterConfiguration.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/WebSocketRosPhysicalAdapterConfiguration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/exception/WebSocketRosPhysicalAdapterException.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/exception/WebSocketRosPhysicalAdapterException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/rostopic/DigitalTwinRosTopic.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/rostopic/DigitalTwinRosTopic.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/rostopic/RosTopicSubscribeFunction.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/rostopic/RosTopicSubscribeFunction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwin.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwinShadowingFunction.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwinModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/RosBridgeClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/RosBridgeClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/WebSocketRosPhysicalAdapter.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/WebSocketRosPhysicalAdapter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/WebSocketRosPhysicalAdapterConfiguration.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/WebSocketRosPhysicalAdapterConfiguration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/exception/WebSocketRosPhysicalAdapterException.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/exception/WebSocketRosPhysicalAdapterException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/rostopic/DigitalTwinRosTopic.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/rostopic/DigitalTwinRosTopic.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/adapter/physical/websocket/ros/rostopic/RosTopicSubscribeFunction.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros_physical_adapter/rostopic/RosTopicSubscribeFunction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/modules/BenchmarkModule.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/modules/BenchmarkModule.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/modules/CsvExporter.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/modules/CsvExporter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/modules/OdteManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/modules/OdteManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/modules/RosPacketErrorDetector.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/modules/RosPacketErrorDetector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/RosCommands.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/RosCommands.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/px4_msgs/CustomVehicleOdometry.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/px4_msgs/CustomVehicleOdometry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/px4_msgs/CustomVehicleStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/px4_msgs/CustomVehicleStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/px4_msgs/OffboardControlMode.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/px4_msgs/OffboardControlMode.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/px4_msgs/TrajectorySetpoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/px4_msgs/TrajectorySetpoint.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/px4_msgs/VehicleCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/px4_msgs/VehicleCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/px4_msgs/VehicleOdometry.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/px4_msgs/VehicleOdometry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/ros/px4_msgs/VehicleStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/px4_msgs/VehicleStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/utils/TimestampedNotification.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/utils/TimestampedNotification.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/drone/dt/utils/Vector3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/utils/Vector3D.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;nicolozanonI&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/nicolozanonI/drone-digital-twin-px4-sitl.git&quot;,
+    &quot;accountId&quot;: &quot;6b950377-bd57-430a-ae2d-8fdee4fc043b&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="3HlMdW0tenFB9sqx1BQJo7Iso7c" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.DroneDigitalTwin.executor": "Run",
+    "Application.iot.entanglement.drone.dt.DroneDigitalTwin.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/nicol/IdeaProjects/drone-digital-twin-px4-sitl/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\nicol\IdeaProjects\drone-digital-twin-px4-sitl\entanglement\entanglement-aware-drone-digital-twin\src\main\java\iot\entanglement\drone\dt" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.iot.entanglement.drone.dt.DroneDigitalTwin">
+    <configuration name="DroneDigitalTwin" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="iot.drone.dt.DroneDigitalTwin" />
+      <module name="drone-digital-twin" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="iot.entanglement.drone.dt.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="iot.entanglement.drone.dt.DroneDigitalTwin" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="iot.entanglement.drone.dt.DroneDigitalTwin" />
+      <module name="entanglement-aware-drone-digital-twin" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="iot.entanglement.drone.dt.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.iot.entanglement.drone.dt.DroneDigitalTwin" />
+        <item itemvalue="Application.DroneDigitalTwin" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="cf743077-6edc-44ed-9461-2c08a8e7c2a5" name="Changes" comment="" />
+      <created>1786438289423</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1786438289423</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Added base Drone Digital Twin for PX4 SITL">
+      <option name="closed" value="true" />
+      <created>1786442659392</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1786442659392</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Some updates">
+      <option name="closed" value="true" />
+      <created>1786449050324</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1786449050325</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Updated README.md">
+      <option name="closed" value="true" />
+      <created>1786452990661</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1786452990661</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Updated README.md">
+      <option name="closed" value="true" />
+      <created>1786453290296</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1786453290296</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added base Drone Digital Twin for PX4 SITL" />
+    <MESSAGE value="Some updates" />
+    <MESSAGE value="Updated README.md" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updated README.md" />
+  </component>
+</project>
