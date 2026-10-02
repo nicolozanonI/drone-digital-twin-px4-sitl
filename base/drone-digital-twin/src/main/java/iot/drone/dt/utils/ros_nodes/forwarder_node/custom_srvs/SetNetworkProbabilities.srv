@@ -1,0 +1,7 @@
+float64 drop_probability
+float64 packet_invalidity_probability
+float64 out_of_order_probability
+float64 delay_probability
+---
+bool success
+string message
