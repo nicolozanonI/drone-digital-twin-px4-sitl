@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf743077-6edc-44ed-9461-2c08a8e7c2a5" name="Changes" comment="Update">
-      <change afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/utils/dockerfile_px4_image" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -149,7 +148,15 @@
       <option name="project" value="LOCAL" />
       <updated>1790942181419</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Update">
+      <option name="closed" value="true" />
+      <created>1791272103096</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1791272103096</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

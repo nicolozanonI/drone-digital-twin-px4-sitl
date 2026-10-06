@@ -7,7 +7,6 @@ ENV TZ=Europe/Rome
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
-
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -20,16 +19,12 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     python3 \
     python3-pip \
-    python3-colcon-common-extensions \
-    python3-vcstool \
-    python3-rosdep \
     locales \
     unzip \
     nano \
     && rm -rf /var/lib/apt/lists/*
 
 RUN locale-gen en_US en_US.UTF-8
-
 
 RUN apt-get update && apt-get install -y curl
 
@@ -39,13 +34,8 @@ RUN export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-inf
     dpkg -i /tmp/ros2-apt-source.deb
 
 RUN apt-get update && apt-get install -y \
-    ros-jazzy-ros-base \
+    ros-jazzy-desktop \
     ros-dev-tools
-
-
-RUN rosdep init || true
-RUN rosdep update
-
 
 RUN pip3 install --break-system-packages \
     empy==3.3.4 \
@@ -71,7 +61,6 @@ WORKDIR /root/ros2_px4_ws
 
 RUN source /opt/ros/jazzy/setup.bash && \
     colcon build
-
 
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
     echo "source /root/ros2_px4_ws/install/setup.bash" >> /root/.bashrc
