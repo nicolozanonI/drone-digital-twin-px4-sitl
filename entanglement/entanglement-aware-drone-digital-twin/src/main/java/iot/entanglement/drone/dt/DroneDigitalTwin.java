@@ -51,7 +51,7 @@ public class DroneDigitalTwin {
 
             DigitalTwinEngine digitalTwinEngine = new DigitalTwinEngine();
 
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_1", 9090, 1, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_1", 9090, 2, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
 
             digitalTwinEngine.startAll();
 
@@ -81,7 +81,7 @@ public class DroneDigitalTwin {
             );
 
             RosCommands rosCommand = new RosCommands(droneId, targetSystem);
-            RosBridgeClient rosBridgeClient1 = new RosBridgeClient("", websocketServerPort); // rosclient created
+            RosBridgeClient rosBridgeClient1 = new RosBridgeClient("10.120.0.235", websocketServerPort); // rosclient created
             WebSocketRosPhysicalAdapterConfiguration PhysicalAdapter1Config = new WebSocketRosPhysicalAdapterConfiguration(
                     droneId + "wesocket-adapter-config-1", rosBridgeClient1, rosCommand);
 
@@ -132,7 +132,7 @@ public class DroneDigitalTwin {
                     CustomVehicleStatus.TYPE).queueLength(0).throttleRate(50).build();
             DigitalTwinRosTopic vehicleStatusTopic = new DigitalTwinRosTopic(vehicleStatusSubscription, getVehicleStatus(odteManager, rosPacketErrorDetector));
             PhysicalAdapter1Config.addPhysicalAssetPropertyTopic("status",
-                    new CustomVehicleStatus(), vehicleStatusTopic);
+                    "NONE", vehicleStatusTopic);
 
             PhysicalAdapter1Config.build();
 
@@ -196,7 +196,7 @@ public class DroneDigitalTwin {
             );
             switch (validationResult) {
                 case "VALID": {
-                    px4Logger.info("VALID");
+                    px4Logger.info("VALID POSITION AND VELOCITY");
                     odteManager.physicalToDigitalTimeliness.tracker().recordEvent();
                     odteManager.incrementValidPacketsCounter();
 
@@ -273,12 +273,15 @@ public class DroneDigitalTwin {
         return msgPayload -> {
             WldtEvent<?> statusEvent = null;
 
+
+
             odteManager.incrementTotalPacketsCounter();
 
             String validationResult = rosPacketErrorDetector.messageValidationResult(
                     msgPayload,
                     "/forwarder/vehicle/status"
             );
+
 
             switch (validationResult) {
 

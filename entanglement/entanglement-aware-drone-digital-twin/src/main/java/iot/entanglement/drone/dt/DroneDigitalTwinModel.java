@@ -157,10 +157,12 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             PhysicalAssetProperty<Object> physicalAssetProperty = new PhysicalAssetProperty<>(droneId+"-entanglement", Objects.requireNonNull(buildJsonOdteMap(new HashMap<String, Double>() {{
                 putAll(Map.of(
                         "odte_p2d", 1.0,
-                        "reliability", 1.0,
-                        "timeliness", 1.0,
-                        "packets_validity", 1.0,
-                        "out_of_sync_packets", 1.0
+                        "reliability_p2d", 1.0,
+                        "timeliness_p2d", 1.0,
+                        "odte_p2d", 1.0,
+                        "reliability_d2p", 1.0,
+                        "availability_d2p", 1.0,
+                        "timeliness_d2p", 1.0
                 ));
             }})));
             this.digitalTwinStateManager.createProperty(new DigitalTwinStateProperty<>(physicalAssetProperty.getKey(),
@@ -332,11 +334,13 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                       "to":   { "label": "Digital_Twin",   "id": "%s" },
                       "relationship": "REPLICATED_BY",
                       "attributes": {
-                        "reliability": 1.0,
-                        "timeliness": 1.0,
-                        "packet validity": 1.0,
-                        "packet order": 1.0,
-                        "odte": 1.0
+                        "odte_p2d", 1.0,
+                        "reliability_p2d", 1.0,
+                        "timeliness_p2d", 1.0,
+                        "odte_p2d", 1.0,
+                        "reliability_d2p", 1.0,
+                        "availability_d2p", 1.0,
+                        "timeliness_d2p", 1.0
                       }
                     }
                     """,
@@ -704,11 +708,14 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
 
 
                     HashMap<String, Double> odteMetricsValues = new HashMap<>();
-                    odteMetricsValues.put("odte", this.odteManager.physicalToDigitalOdte.value());
-                    odteMetricsValues.put("reliability", this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value());
-                    odteMetricsValues.put("timeliness", this.odteManager.physicalToDigitalTimeliness.ratioGauge().value());
-                    odteMetricsValues.put("packet validity", this.odteManager.packetValidityMetric.qualityRatioGauge().value());
-                    odteMetricsValues.put("packet order", this.odteManager.packetOutOfSeqMetric.qualityRatioGauge().value());
+                    odteMetricsValues.put("odte_p2d", this.odteManager.physicalToDigitalOdte.value());
+                    odteMetricsValues.put("reliability_p2d", this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value());
+                    odteMetricsValues.put("timeliness_p2d", this.odteManager.physicalToDigitalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put("odte_d2p", this.odteManager.digitalToPhysicalOdte.value());
+                    odteMetricsValues.put("reliability_d2p", this.odteManager.reliabilityDigitalToPhysical.ratioGauge().value());
+                    odteMetricsValues.put("timeliness_d2p", this.odteManager.digitalToPhysicalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put("availability_d2p", this.odteManager.availabilityDigitalToPhysical.ratioGauge().value());
+
 
                     csvLogger.log(
                             timestampUs,
@@ -722,8 +729,10 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                             this.odteManager.physicalToDigitalOdte.value(),
                             this.odteManager.physicalToDigitalTimeliness.ratioGauge().value(),
                             this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value(),
-                            this.odteManager.packetValidityMetric.qualityRatioGauge().value(),
-                            this.odteManager.packetOutOfSeqMetric.qualityRatioGauge().value()
+                            this.odteManager.digitalToPhysicalOdte.value(),
+                            this.odteManager.digitalToPhysicalTimeliness.ratioGauge().value(),
+                            this.odteManager.availabilityDigitalToPhysical.ratioGauge().value(),
+                            this.odteManager.reliabilityDigitalToPhysical.ratioGauge().value()
                     );
 
                 } catch (Exception e) {
@@ -779,11 +788,16 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             while (true) {
                 try {
                     HashMap<String, Double> odteMetricsValues = new HashMap<>();
-                    odteMetricsValues.put("odte", this.odteManager.physicalToDigitalOdte.value());
-                    odteMetricsValues.put("reliability", this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value());
-                    odteMetricsValues.put("timeliness", this.odteManager.physicalToDigitalTimeliness.ratioGauge().value());
-                    odteMetricsValues.put("packet validity", this.odteManager.packetValidityMetric.qualityRatioGauge().value());
-                    odteMetricsValues.put("packet order", this.odteManager.packetOutOfSeqMetric.qualityRatioGauge().value());
+
+                    odteMetricsValues.put("odte_p2d", this.odteManager.physicalToDigitalOdte.value());
+                    odteMetricsValues.put("reliability_p2d", this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value());
+                    odteMetricsValues.put("timeliness_p2d", this.odteManager.physicalToDigitalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put("odte_d2p", this.odteManager.digitalToPhysicalOdte.value());
+                    odteMetricsValues.put("reliability_d2p", this.odteManager.reliabilityDigitalToPhysical.ratioGauge().value());
+                    odteMetricsValues.put("timeliness_d2p", this.odteManager.digitalToPhysicalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put("availability_d2p", this.odteManager.availabilityDigitalToPhysical.ratioGauge().value());
+
+
                     PhysicalAssetPropertyWldtEvent<Object> physicalAssetPropertyWldtEvent = new PhysicalAssetPropertyWldtEvent<>(this.droneId+"-entanglement", Objects.requireNonNull(buildJsonOdteMap(odteMetricsValues)));
                     onPhysicalAssetPropertyVariation(physicalAssetPropertyWldtEvent);
                     Map<String, Object> messageBody = new HashMap<>();
@@ -811,6 +825,166 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
         MqttMessage message = new MqttMessage(payload.getBytes(StandardCharsets.UTF_8));
         message.setQos(1);
         client.publish(topic, message);
+    }
+
+    protected void verifyActionExecution(
+            String expectedState,
+            long actionTriggerTimestamp,
+            long timeoutMs) {
+
+        new Thread(() -> {
+
+            try {
+
+                String initialState = String.valueOf(
+                        digitalTwinStateManager
+                                .getDigitalTwinState()
+                                .getProperty("state")
+                                .orElseThrow(() ->
+                                        new IllegalStateException(
+                                                "Property 'state' not found"))
+                                .getValue());
+
+                // Stato già raggiunto:
+                // non considero la richiesta nelle metriche.
+                if (expectedState.equals(initialState)) {
+                    return;
+                }
+
+                final long deadline = actionTriggerTimestamp + timeoutMs;
+
+                while (System.currentTimeMillis() < deadline) {
+
+                    String currentState = String.valueOf(
+                            digitalTwinStateManager
+                                    .getDigitalTwinState()
+                                    .getProperty("state")
+                                    .orElseThrow(() ->
+                                            new IllegalStateException(
+                                                    "Property 'state' not found"))
+                                    .getValue());
+
+                    if (expectedState.equals(currentState)) {
+
+                        long timeliness =
+                                System.currentTimeMillis()
+                                        - actionTriggerTimestamp;
+
+                        odteManager.digitalToPhysicalTimeliness
+                                .timer()
+                                .record(Duration.ofMillis(timeliness));
+
+                        odteManager.incrementReuqestedActionsCounter();
+                        odteManager.incrementExecutedActionsCounter();
+
+                        return;
+                    }
+
+                    Thread.sleep(100);
+                }
+
+                // Timeout: azione richiesta ma non osservata
+                odteManager.incrementReuqestedActionsCounter();
+
+            } catch (InterruptedException e) {
+
+                Thread.currentThread().interrupt();
+
+            } catch (WldtDigitalTwinStatePropertyException e) {
+
+                throw new RuntimeException(e);
+            }
+
+        }).start();
+    }
+
+    private boolean isPositionReached(
+            Vector3D current,
+            Vector3D target,
+            double tolerance) {
+
+        return Math.abs(current.getX() - target.getX()) <= tolerance
+                && Math.abs(current.getY() - target.getY()) <= tolerance
+                && Math.abs(current.getZ() - target.getZ()) <= tolerance;
+    }
+
+
+    protected void verifyPositionExecution(
+            Vector3D targetPosition,
+            long actionTriggerTimestamp,
+            Duration timeout,
+            double tolerance) {
+
+        new Thread(() -> {
+
+            try {
+
+                Vector3D currentPosition =
+                        (Vector3D) digitalTwinStateManager
+                                .getDigitalTwinState()
+                                .getProperty("position")
+                                .orElseThrow(() ->
+                                        new IllegalStateException(
+                                                "Property 'position' not found"))
+                                .getValue();
+
+                // Già arrivato
+                if (isPositionReached(
+                        currentPosition,
+                        targetPosition,
+                        tolerance)) {
+                    return;
+                }
+
+                long deadline =
+                        actionTriggerTimestamp + timeout.toMillis();
+
+                while (System.currentTimeMillis() < deadline) {
+
+                    currentPosition =
+                            (Vector3D) digitalTwinStateManager
+                                    .getDigitalTwinState()
+                                    .getProperty("position")
+                                    .orElseThrow(() ->
+                                            new IllegalStateException(
+                                                    "Property 'position' not found"))
+                                    .getValue();
+
+                    if (isPositionReached(
+                            currentPosition,
+                            targetPosition,
+                            tolerance)) {
+
+                        long timeliness =
+                                System.currentTimeMillis()
+                                        - actionTriggerTimestamp;
+
+                        odteManager.digitalToPhysicalTimeliness
+                                .timer()
+                                .record(Duration.ofMillis(timeliness));
+
+                        odteManager.incrementReuqestedActionsCounter();
+                        odteManager.incrementExecutedActionsCounter();
+
+                        return;
+                    }
+
+                    Thread.sleep(100);
+                }
+
+                // timeout
+                odteManager.incrementReuqestedActionsCounter();
+
+            } catch (InterruptedException e) {
+
+                Thread.currentThread().interrupt();
+
+            } catch (WldtDigitalTwinStatePropertyException e) {
+
+                throw new RuntimeException(e);
+            }
+
+        }).start();
     }
 
 }

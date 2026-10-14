@@ -6,6 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="cf743077-6edc-44ed-9461-2c08a8e7c2a5" name="Changes" comment="Update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwin.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/drone-digital-twin/src/main/java/iot/drone/dt/DroneDigitalTwin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwin.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwinModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwinModel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -164,7 +167,15 @@
       <option name="project" value="LOCAL" />
       <updated>1791273603653</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Update">
+      <option name="closed" value="true" />
+      <created>1791278723767</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1791278723767</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

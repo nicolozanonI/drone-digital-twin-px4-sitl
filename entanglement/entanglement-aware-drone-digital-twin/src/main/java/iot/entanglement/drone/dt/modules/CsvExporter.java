@@ -46,12 +46,14 @@ public class CsvExporter implements Closeable {
             double velX,
             double velY,
             double velZ,
-            double odte,
-            double timeliness,
-            double reliability,
-            double packetValidity,
-            double packetOrder
-    ) throws IOException {
+            double odte_p2d,
+            double timeliness_p2d,
+            double reliability_p2d,
+            double odte_d2p,
+            double timeliness_d2p,
+            double reliability_d2p,
+            double availability_d2p
+            ) throws IOException {
 
         String line = String.format(
                 Locale.US,
@@ -64,11 +66,13 @@ public class CsvExporter implements Closeable {
                 velX,
                 velY,
                 velZ,
-                odte,
-                timeliness,
-                reliability,
-                packetValidity,
-                packetOrder
+                odte_p2d,
+                timeliness_p2d,
+                reliability_p2d,
+                odte_d2p,
+                timeliness_d2p,
+                reliability_d2p,
+                availability_d2p
         );
 
         writer.write(line);

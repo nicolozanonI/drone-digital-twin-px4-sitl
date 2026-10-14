@@ -361,7 +361,7 @@ public class OdteManager {
             8
     );
 
-    private final odteRatio availabilityDigitalToPhysical = createMetrics(
+    public final odteRatio availabilityDigitalToPhysical = createMetrics(
             this.prometheusRegistry,
             droneId + "_heartbeat_total",
             "Total number of heartbeat",
@@ -423,7 +423,7 @@ public class OdteManager {
             .description("Product of updates and requests efficiency ratios")
             .register(prometheusRegistry);
 
-    private final Gauge digitalToPhysicalOdte = Gauge.builder(droneId + "_digital_to_physical_odte", () -> {
+    public final Gauge digitalToPhysicalOdte = Gauge.builder(droneId + "_digital_to_physical_odte", () -> {
                 double ratio1 = this.reliabilityDigitalToPhysical.ratioGauge().value();
                 double ratio2 = this.availabilityDigitalToPhysical.ratioGauge().value();
                 double digitalToPhysicalTimelinessValue = this.digitalToPhysicalTimeliness.ratioGauge().value();

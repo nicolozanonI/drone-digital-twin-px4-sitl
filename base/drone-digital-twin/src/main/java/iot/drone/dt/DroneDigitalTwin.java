@@ -48,7 +48,7 @@ public class DroneDigitalTwin {
 
             DigitalTwinEngine digitalTwinEngine = new DigitalTwinEngine();
 
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_1", 9090, 1, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_1", 9090, 2, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
 
             digitalTwinEngine.startAll();
 
