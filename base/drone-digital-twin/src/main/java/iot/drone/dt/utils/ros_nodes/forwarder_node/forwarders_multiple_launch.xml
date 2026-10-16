@@ -1,0 +1,73 @@
+<launch>
+
+    <!-- Drone 1 (con CSV abilitato) -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_1" output="screen">
+        <param name="drone_id" value="uav_1"/>
+        <param name="enable_csv_logging" value="true"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 2 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_2" output="screen">
+        <param name="drone_id" value="uav_2"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 3 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_3" output="screen">
+        <param name="drone_id" value="uav_3"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 4 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_4" output="screen">
+        <param name="drone_id" value="uav_4"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 5 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_5" output="screen">
+        <param name="drone_id" value="uav_5"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 6 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_6" output="screen">
+        <param name="drone_id" value="uav_6"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 7 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_7" output="screen">
+        <param name="drone_id" value="uav_7"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 8 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_8" output="screen">
+        <param name="drone_id" value="uav_8"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 9 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_9" output="screen">
+        <param name="drone_id" value="uav_9"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+    <!-- Drone 10 -->
+    <node pkg="px4_forwarder" exec="forwarder_node" name="forwarder_uav_10" output="screen">
+        <param name="drone_id" value="uav_10"/>
+        <param name="enable_csv_logging" value="false"/>
+        <param name="rate" value="10.0"/>
+    </node>
+
+</launch>
