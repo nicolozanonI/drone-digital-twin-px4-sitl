@@ -32,7 +32,8 @@ public class CsvExporter implements Closeable {
                 "timestampUs,droneId," +
                         "posX,posY,posZ," +
                         "velX,velY,velZ," +
-                        "odte,timeliness,reliability,packetValidity,packetOrder"
+                        "odte_p2d,timeliness_p2d,reliability_p2d," +
+                        "odte_d2p,timeliness_d2p,reliability_d2p,availability_d2p"
         );
         writer.newLine();
     }
@@ -57,18 +58,27 @@ public class CsvExporter implements Closeable {
 
         String line = String.format(
                 Locale.US,
-                "%d,%s,%.9f,%.9f,%.9f,%.9f,%.9f,%.9f,%.9f,%.9f,%.9f,%.9f,%.9f",
+                "%d,%s," +
+                        "%.9f,%.9f,%.9f," +
+                        "%.9f,%.9f,%.9f," +
+                        "%.9f,%.9f,%.9f," +
+                        "%.9f,%.9f,%.9f,%.9f",
+
                 timestampUs,
                 escapeCsv(droneId),
+
                 posX,
                 posY,
                 posZ,
+
                 velX,
                 velY,
                 velZ,
+
                 odte_p2d,
                 timeliness_p2d,
                 reliability_p2d,
+
                 odte_d2p,
                 timeliness_d2p,
                 reliability_d2p,

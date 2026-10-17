@@ -53,6 +53,17 @@ public class DroneDigitalTwin {
 
             digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_1", 9090, 2, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
 
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_2", 9091, 3, 3002, 9401,
+                    "ws-server-2", "temperature", "config-A", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_3", 9092,4, 3003, 9402, "ws-server-1", "temperature", "config-B", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_4", 9093,5, 3004, 9403, "ws-server-1", "temperature", "config-B", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_5", 9090, 6,3005, 9404, "ws-server-2", "camera", "config-A", "zone-7", "urban"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_6", 9090,7, 3006,9405, "ws-server-2", "humidity", "config-C", "zone-7", "urban"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_7", 9091,8, 3007, 9406, "ws-server-1", "camera", "config-A", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_8", 9092,9, 3008, 9407, "ws-server-2", "pressure", "config-C", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_9", 9093,10, 3009, 9408, "ws-server-2", "pressure", "config-B", "zone-7", "urban"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_10", 9093,11, 3010, 9410, "ws-server-1", "humidity", "config-C", "zone-4", "forest"));
+
             digitalTwinEngine.startAll();
 
         } catch (Exception e) {
@@ -76,7 +87,7 @@ public class DroneDigitalTwin {
             DroneDigitalTwinModel defaultShadowingFunction = new DroneDigitalTwinModel(droneId, odteManager, httpPrometheusServerPort, droneId, websocketServerId, sensorType, commType,
                     zoneId, zoneClass);
             DigitalTwin digitalTwin = new DigitalTwin(
-                    droneId + "px4-digital-twin-id",
+                    droneId + "-digital-twin-id",
                     defaultShadowingFunction
             );
 
@@ -189,6 +200,7 @@ public class DroneDigitalTwin {
             WldtEvent<?> positionEvent = null;
             WldtEvent<?> velocityEvent = null;
             odteManager.incrementTotalPacketsCounter();
+            odteManager.incrementUpdateCounter();
 
             String validationResult = rosPacketErrorDetector.messageValidationResult(
                     msgPayload,
@@ -197,11 +209,18 @@ public class DroneDigitalTwin {
             switch (validationResult) {
                 case "VALID": {
                     px4Logger.info("VALID POSITION AND VELOCITY");
-                    odteManager.physicalToDigitalTimeliness.tracker().recordEvent();
-                    odteManager.incrementValidPacketsCounter();
+                    //odteManager.incrementValidPacketsCounter();
 
                     CustomVehicleOdometry customVehicleOdometry =
                             CustomVehicleOdometry.fromJsonObject(msgPayload);
+
+                    long dtTimestampUs =
+                            System.currentTimeMillis() * 1000L;
+
+                    odteManager.recordPhysicalToDigitalObservation(
+                            customVehicleOdometry.getTimestamp(),
+                            dtTimestampUs
+                    );
 
                     try {
                         Vector3D position = customVehicleOdometry.getPositionAsArray();
@@ -288,7 +307,7 @@ public class DroneDigitalTwin {
                 case "VALID": {
                     px4Logger.info("VALID STATUS");
                     //odteManager.physicalToDigitalTimeliness.tracker().recordEvent();
-                    odteManager.incrementUpdateCounter();
+                    odteManager.incrementHeartbeatsCounter();
                     odteManager.incrementValidPacketsCounter();
 
                     CustomVehicleStatus customVehicleStatus =

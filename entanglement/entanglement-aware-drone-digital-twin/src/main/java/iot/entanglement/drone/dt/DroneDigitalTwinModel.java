@@ -159,7 +159,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                         "odte_p2d", 1.0,
                         "reliability_p2d", 1.0,
                         "timeliness_p2d", 1.0,
-                        "odte_p2d", 1.0,
+                        "odte_d2p", 1.0,
                         "reliability_d2p", 1.0,
                         "availability_d2p", 1.0,
                         "timeliness_d2p", 1.0
@@ -274,11 +274,15 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
 
         // Qui ci va funzione per verificare se velocità è maggiore di 0
         //startSendingOdteMetrics();
-        offboardControlMode();
+
+
 
         try {
+            px4_shadowing_logger.info("Before MQTT client");
             MqttClient client = new MqttClient(broker, MqttClient.generateClientId());
+            px4_shadowing_logger.info("Before MQTT client 2");
             client.connect();
+            px4_shadowing_logger.info("Before MQTT client 3");
 
             // Drone
             publish(client, nodeTopic, String.format(
@@ -334,13 +338,13 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                       "to":   { "label": "Digital_Twin",   "id": "%s" },
                       "relationship": "REPLICATED_BY",
                       "attributes": {
-                        "odte_p2d", 1.0,
-                        "reliability_p2d", 1.0,
-                        "timeliness_p2d", 1.0,
-                        "odte_p2d", 1.0,
-                        "reliability_d2p", 1.0,
-                        "availability_d2p", 1.0,
-                        "timeliness_d2p", 1.0
+                        "odte_p2d": 1.0,
+                        "reliability_p2d": 1.0,
+                        "timeliness_p2d": 1.0,
+                        "odte_d2p": 1.0,
+                        "reliability_d2p": 1.0,
+                        "availability_d2p": 1.0,
+                        "timeliness_d2p": 1.0
                       }
                     }
                     """,
@@ -350,14 +354,18 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
 
             //startBenchmark(10, "22:04:00", 1800); // Here you can configure benchmark start
 
-            System.out.println("Graph updated: Drone and Server created and connected.");
+            px4_shadowing_logger.info("Graph updated: Drone and Server created and connected.");
 
             startSendingOdteMetrics(client, edgeUpdateTopic);
+
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+
+
+        offboardControlMode();
 
     }
 
@@ -374,6 +382,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
     @Override
     protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalAssetPropertyWldtEvent) {
         px4_shadowing_logger.info("Shadowing - onPAPropertyVariation - property event: {} ", physicalAssetPropertyWldtEvent);
+        px4_shadowing_logger.info("THIS PORPERTY WAS UPDATED {}", physicalAssetPropertyWldtEvent.getPhysicalPropertyId());
         //Update Digital Twin Status
         if(!Objects.isNull(physicalAssetPropertyWldtEvent)) {
             try {
@@ -394,6 +403,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                         break;
                     default:
                         this.digitalTwinStateManager.startStateTransaction();
+
                         this.digitalTwinStateManager.updateProperty(
                                 new DigitalTwinStateProperty<>(
                                         physicalAssetPropertyWldtEvent.getPhysicalPropertyId(),
@@ -710,10 +720,15 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                     HashMap<String, Double> odteMetricsValues = new HashMap<>();
                     odteMetricsValues.put("odte_p2d", this.odteManager.physicalToDigitalOdte.value());
                     odteMetricsValues.put("reliability_p2d", this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value());
-                    odteMetricsValues.put("timeliness_p2d", this.odteManager.physicalToDigitalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put(
+                            "timeliness_p2d",
+                            this.odteManager
+                                    .physicalToDigitalTimeliness
+                                    .currentValue()
+                    );
                     odteMetricsValues.put("odte_d2p", this.odteManager.digitalToPhysicalOdte.value());
                     odteMetricsValues.put("reliability_d2p", this.odteManager.reliabilityDigitalToPhysical.ratioGauge().value());
-                    odteMetricsValues.put("timeliness_d2p", this.odteManager.digitalToPhysicalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put("timeliness_d2p", this.odteManager.digitalToPhysicalTimeliness.currentValue());
                     odteMetricsValues.put("availability_d2p", this.odteManager.availabilityDigitalToPhysical.ratioGauge().value());
 
 
@@ -727,12 +742,14 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                             velY,
                             velZ,
                             this.odteManager.physicalToDigitalOdte.value(),
-                            this.odteManager.physicalToDigitalTimeliness.ratioGauge().value(),
+                            this.odteManager
+                                            .physicalToDigitalTimeliness
+                                            .currentValue(),
                             this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value(),
                             this.odteManager.digitalToPhysicalOdte.value(),
-                            this.odteManager.digitalToPhysicalTimeliness.ratioGauge().value(),
-                            this.odteManager.availabilityDigitalToPhysical.ratioGauge().value(),
-                            this.odteManager.reliabilityDigitalToPhysical.ratioGauge().value()
+                            this.odteManager.digitalToPhysicalTimeliness.currentValue(),
+                            this.odteManager.reliabilityDigitalToPhysical.ratioGauge().value(),
+                            this.odteManager.availabilityDigitalToPhysical.ratioGauge().value()
                     );
 
                 } catch (Exception e) {
@@ -783,20 +800,32 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
     }
 
     public void startSendingOdteMetrics(MqttClient client, String edgeUpdateTopic) {
-
+        px4_shadowing_logger.info("BEFORE THREAD");
         new Thread(() -> {
+            px4_shadowing_logger.info("BEFORE WHILE");
             while (true) {
                 try {
+
                     HashMap<String, Double> odteMetricsValues = new HashMap<>();
 
                     odteMetricsValues.put("odte_p2d", this.odteManager.physicalToDigitalOdte.value());
                     odteMetricsValues.put("reliability_p2d", this.odteManager.reliabilityPhysicalToDigital.ratioGauge().value());
-                    odteMetricsValues.put("timeliness_p2d", this.odteManager.physicalToDigitalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put(
+                            "timeliness_p2d",
+                            this.odteManager
+                                    .physicalToDigitalTimeliness
+                                    .currentValue()
+                    );
+
                     odteMetricsValues.put("odte_d2p", this.odteManager.digitalToPhysicalOdte.value());
                     odteMetricsValues.put("reliability_d2p", this.odteManager.reliabilityDigitalToPhysical.ratioGauge().value());
-                    odteMetricsValues.put("timeliness_d2p", this.odteManager.digitalToPhysicalTimeliness.ratioGauge().value());
+                    odteMetricsValues.put("timeliness_d2p", this.odteManager.digitalToPhysicalTimeliness.currentValue());
                     odteMetricsValues.put("availability_d2p", this.odteManager.availabilityDigitalToPhysical.ratioGauge().value());
-
+                    px4_shadowing_logger.info("++++++++++++++++++++++++++++++++++++");
+                    px4_shadowing_logger.info(
+                            "ODTE VALUES SENT TO DT -> {}",
+                            odteMetricsValues
+                    );
 
                     PhysicalAssetPropertyWldtEvent<Object> physicalAssetPropertyWldtEvent = new PhysicalAssetPropertyWldtEvent<>(this.droneId+"-entanglement", Objects.requireNonNull(buildJsonOdteMap(odteMetricsValues)));
                     onPhysicalAssetPropertyVariation(physicalAssetPropertyWldtEvent);
@@ -827,7 +856,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
         client.publish(topic, message);
     }
 
-    protected void verifyActionExecution(
+    /*protected void verifyActionExecution(
             String expectedState,
             long actionTriggerTimestamp,
             long timeoutMs) {
@@ -896,7 +925,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             }
 
         }).start();
-    }
+    }*/
 
     private boolean isPositionReached(
             Vector3D current,
@@ -909,7 +938,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
     }
 
 
-    protected void verifyPositionExecution(
+    /*protected void verifyPositionExecution(
             Vector3D targetPosition,
             long actionTriggerTimestamp,
             Duration timeout,
@@ -985,7 +1014,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             }
 
         }).start();
-    }
+    }*/
 
 }
 

@@ -66,10 +66,10 @@ public class OdteManager {
 
     // To compute availability and reliability ratios
     private odteRatio createMetrics(PrometheusMeterRegistry prometheusRegistry,
-                                      String counterName, String counterDescription,
-                                      String gaugeName, String gaugeDescription,
-                                      String ratioGaugeName, String ratioGaugeDescription,
-                                      double initialValue) {
+                                    String counterName, String counterDescription,
+                                    String gaugeName, String gaugeDescription,
+                                    String ratioGaugeName, String ratioGaugeDescription,
+                                    double initialValue) {
 
         SlidingWindowCounter counter = new SlidingWindowCounter(prometheusRegistry, counterName, counterDescription, 30);
         AtomicReference<Double> expectedGaugeValue = new AtomicReference<>(initialValue);
@@ -133,7 +133,7 @@ public class OdteManager {
                     double executedInWindow = executedCounter.getWindowTotalCount();
                     double requestedInWindow = requestedActionsCounter.getWindowTotalCount();
                     if (requestedInWindow == 0.0) {
-                        return 0.0;
+                        return 1.0;
                     }
                     double ratio = executedInWindow / requestedInWindow;
                     return Math.min(1.0, Math.max(0.0, ratio));
@@ -146,47 +146,104 @@ public class OdteManager {
     }
 
     // Timeliness
-    public record Timeliness(Timer timer, Gauge ratioGauge, AtomicReference<Duration> sloThreshold
-    ) {}
+    public record Timeliness(
+            TimelinessTracker tracker,
+            AtomicReference<Duration> threshold
+    ) {
+
+        public double currentValue() {
+            return tracker.computeRatio(
+                    threshold.get()
+            );
+        }
+    }
+    public static class TimelinessTracker {
+
+        record Observation(
+                long timestamp,
+                long latencyMillis
+        ) {}
+
+        private final ConcurrentLinkedDeque<Observation> observations =
+                new ConcurrentLinkedDeque<>();
+
+        private final long windowMillis;
+
+        public TimelinessTracker(long windowSeconds) {
+            this.windowMillis =
+                    TimeUnit.SECONDS.toMillis(windowSeconds);
+        }
+
+        public double currentValue(Duration threshold) {
+            return computeRatio(threshold);
+        }
+
+        public void recordObservation(long latencyMillis) {
+
+            long now = System.currentTimeMillis();
+
+            observations.addLast(
+                    new Observation(now, latencyMillis)
+            );
+
+            cleanup(now);
+        }
+
+        private void cleanup(long now) {
+
+            long windowStart = now - windowMillis;
+
+            while (!observations.isEmpty()
+                    && observations.peekFirst().timestamp < windowStart) {
+
+                observations.removeFirst();
+            }
+        }
+
+        public double computeRatio(Duration threshold) {
+
+            cleanup(System.currentTimeMillis());
+
+            long total = observations.size();
+
+            if (total == 0) {
+                return 1.0;
+            }
+
+            long thresholdMillis = threshold.toMillis();
+
+            long underThreshold =
+                    observations.stream()
+                            .filter(o ->
+                                    o.latencyMillis <= thresholdMillis)
+                            .count();
+
+            return (double) underThreshold / total;
+        }
+    }
 
     private Timeliness createTimerWithRatio(
-            String timerName, String timerDescription,
-            String ratioGaugeName, String ratioGaugeDescription,
-            double percentile, Duration expiryDuration,
+            String timerName,
+            String timerDescription,
+            String ratioGaugeName,
+            String ratioGaugeDescription,
+            double percentile,
+            Duration expiryDuration,
             Duration initialSloThreshold,
             Duration slidingWindow) {
 
-        Timer timer = Timer.builder(timerName)
-                .description(timerDescription)
-                .publishPercentiles(percentile)
-                .distributionStatisticExpiry(slidingWindow)
-                .serviceLevelObjectives(initialSloThreshold)
-                .register(prometheusRegistry);
+        TimelinessTracker tracker =
+                new TimelinessTracker(
+                        slidingWindow.toSeconds()
+                );
 
-        AtomicReference<Duration> sloThresholdRef = new AtomicReference<>(initialSloThreshold);
+        AtomicReference<Duration> threshold =
+                new AtomicReference<>(initialSloThreshold);
 
-        Gauge ratioGauge = Gauge.builder(ratioGaugeName, timer, t -> {
-                    HistogramSnapshot snapshot = t.takeSnapshot();
-                    long total = snapshot.count();
-                    if (total == 0) return 0.0;
-
-                    long countUnderSlo = 0;
-
-                    Duration currentThreshold = sloThresholdRef.get();
-
-                    for (CountAtBucket bucket : snapshot.histogramCounts()) {
-                        if (bucket.bucket(TimeUnit.NANOSECONDS) <= currentThreshold.toNanos()) {
-                            countUnderSlo = (long) bucket.count();
-                        }
-                    }
-
-                    double ratio = (double) countUnderSlo / total;
-                    return Math.min(1.0, Math.max(0.0, ratio));
-                })
-                .description(ratioGaugeDescription)
-                .register(prometheusRegistry);
-
-        return new Timeliness(timer, ratioGauge, sloThresholdRef);
+        return new Timeliness(
+                tracker,
+                threshold
+        );
     }
 
 
@@ -393,13 +450,17 @@ public class OdteManager {
             Duration.ofSeconds(300)
     );*/
 
-    public final JitterWithRatio physicalToDigitalTimeliness = createJitterMetrics(
-            prometheusRegistry,
-            droneId + "_physical_to_digital_timeliness",
-            "Jitter between pose updates",
-            Duration.ofMillis(300),  // I want max n seconds between a message and another
-            30
-        );
+    public final Timeliness physicalToDigitalTimeliness =
+            createTimerWithRatio(
+                    "delta_time",
+                    "Delta time calculation",
+                    "physical_to_digital_timeliness",
+                    "Ratio of delta times under threshold",
+                    0.5,
+                    Duration.ofSeconds(300),
+                    Duration.ofMillis(2000),
+                    Duration.ofSeconds(300)
+            );
 
 
     public final Timeliness digitalToPhysicalTimeliness = createTimerWithRatio(
@@ -415,7 +476,7 @@ public class OdteManager {
 
     public final Gauge physicalToDigitalOdte = Gauge.builder(droneId + "_physical_to_digital_odte", () -> {
                 double ratio1 = this.reliabilityPhysicalToDigital.ratioGauge().value();
-                double physicalToDigitalTimelinessValue = this.physicalToDigitalTimeliness.ratioGauge().value();
+                double physicalToDigitalTimelinessValue = this.physicalToDigitalTimeliness.currentValue();
                 return ratio1 * physicalToDigitalTimelinessValue *
                         this.packetValidityMetric.validPacketsPercentageGauge.value() *
                         this.packetOutOfSeqMetric.validPacketsPercentageGauge.value();
@@ -426,7 +487,7 @@ public class OdteManager {
     public final Gauge digitalToPhysicalOdte = Gauge.builder(droneId + "_digital_to_physical_odte", () -> {
                 double ratio1 = this.reliabilityDigitalToPhysical.ratioGauge().value();
                 double ratio2 = this.availabilityDigitalToPhysical.ratioGauge().value();
-                double digitalToPhysicalTimelinessValue = this.digitalToPhysicalTimeliness.ratioGauge().value();
+                double digitalToPhysicalTimelinessValue = this.digitalToPhysicalTimeliness.currentValue();
                 return ratio1 * ratio2 * digitalToPhysicalTimelinessValue;
             })
             .description("Product of updates and requests efficiency ratios")
@@ -447,6 +508,25 @@ public class OdteManager {
             0.99,
             30
     );
+
+    public void recordPhysicalToDigitalObservation(
+            long ptTimestampUs,
+            long dtTimestampUs) {
+
+        long observationUs =
+                dtTimestampUs - ptTimestampUs;
+
+        if (observationUs < 0) {
+            return;
+        }
+
+        long observationMs =
+                observationUs / 1000L;
+
+        physicalToDigitalTimeliness
+                .tracker()
+                .recordObservation(observationMs);
+    }
 
 
     /*public void setRequestedUpdatesValue(AtomicReference<Double> oldValue, double newValue) {
