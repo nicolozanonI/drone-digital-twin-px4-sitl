@@ -2,6 +2,10 @@
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <px4_msgs/msg/vehicle_status.hpp>
 
+// commands libraries
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
+#include <px4_msgs/msg/vehicle_command.hpp>
+
 #include "px4_forwarder/msg/custom_vehicle_odometry.hpp"
 #include "px4_forwarder/msg/custom_vehicle_status.hpp"
 #include "px4_forwarder/srv/set_float64.hpp"
@@ -54,7 +58,6 @@ public:
         custom_sequence_status_ = 200;
 
         drop_probability_ = 0.0;
-        command_probability_ = 1.0;
         rate_ = 10.0;
         forward_delay_ = 0;
 
@@ -106,6 +109,39 @@ public:
             10
         );
 
+        /*
+         * Comandi: il digital twin Java pubblica su /<drone_id>/forwarder/in/...
+         * e il forwarder li inoltra a PX4 su /<drone_id>/fmu/in/...
+         * applicando drop e/o ritardo.
+         */
+        traj_pub_ = this->create_publisher<px4_msgs::msg::TrajectorySetpoint>(
+            "/" + drone_id_ + "/fmu/in/trajectory_setpoint",
+            qos
+        );
+
+        traj_sub_ = this->create_subscription<px4_msgs::msg::TrajectorySetpoint>(
+            "/" + drone_id_ + "/forwarder/in/trajectory_setpoint",
+            qos,
+            [this](px4_msgs::msg::TrajectorySetpoint::SharedPtr msg) {
+                forward_command<px4_msgs::msg::TrajectorySetpoint>(
+                    *msg, traj_pub_, delayed_traj_buffer_, "trajectory_setpoint");
+            }
+        );
+
+        cmd_pub_ = this->create_publisher<px4_msgs::msg::VehicleCommand>(
+            "/" + drone_id_ + "/fmu/in/vehicle_command",
+            qos
+        );
+
+        cmd_sub_ = this->create_subscription<px4_msgs::msg::VehicleCommand>(
+            "/" + drone_id_ + "/forwarder/in/vehicle_command",
+            qos,
+            [this](px4_msgs::msg::VehicleCommand::SharedPtr msg) {
+                forward_command<px4_msgs::msg::VehicleCommand>(
+                    *msg, cmd_pub_, delayed_cmd_buffer_, "vehicle_command");
+            }
+        );
+
         odom_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(1000.0 / rate_)),
             std::bind(&Forwarder::odometry_forward_callback, this)
@@ -135,16 +171,6 @@ public:
             drone_id_ + "/forwarder/set_forwarder_probability",
             std::bind(
                 &Forwarder::set_forwarder_probability_callback,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2
-            )
-        );
-
-        command_prob_srv_ = this->create_service<px4_forwarder::srv::SetFloat64>(
-            "/" + drone_id_ + "/forwarder/set_command_drop_probability",
-            std::bind(
-                &Forwarder::set_command_probability_callback,
                 this,
                 std::placeholders::_1,
                 std::placeholders::_2
@@ -184,15 +210,15 @@ public:
         );
 
         network_probabilities_srv_ =
-    this->create_service<px4_forwarder::srv::SetNetworkProbabilities>(
-        drone_id_ + "/forwarder/set_network_probabilities",
-        std::bind(
-            &Forwarder::set_network_probabilities_callback,
-            this,
-            std::placeholders::_1,
-            std::placeholders::_2
-        )
-    );
+            this->create_service<px4_forwarder::srv::SetNetworkProbabilities>(
+                drone_id_ + "/forwarder/set_network_probabilities",
+                std::bind(
+                    &Forwarder::set_network_probabilities_callback,
+                    this,
+                    std::placeholders::_1,
+                    std::placeholders::_2
+                )
+            );
 
         delayed_prob_srv_ = this->create_service<px4_forwarder::srv::SetFloat64>(
             drone_id_ + "/forwarder/set_packet_delay_probability",
@@ -223,6 +249,28 @@ public:
             drone_id_ + "/forwarder/set_forwarder_messages_delay",
             std::bind(
                 &Forwarder::set_forwarder_delay_callback,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2
+            )
+        );
+
+        // commands services
+
+        command_delay_srv_ = this->create_service<px4_forwarder::srv::SetFloat64>(
+            drone_id_ + "/forwarder/set_command_delay",
+            std::bind(
+                &Forwarder::set_command_delay_callback,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2
+            )
+        );
+
+        command_drop_srv_ = this->create_service<px4_forwarder::srv::SetFloat64>(
+            drone_id_ + "/forwarder/set_command_drop_probability",
+            std::bind(
+                &Forwarder::set_command_drop_probability_callback,
                 this,
                 std::placeholders::_1,
                 std::placeholders::_2
@@ -269,10 +317,9 @@ public:
             RCLCPP_WARN(this->get_logger(), "CSV logging disabilitato");
         }
 
-
         RCLCPP_INFO(
             this->get_logger(),
-            "Forwarder started for %s, odometry + status",
+            "Forwarder started for %s, odometry + status + commands",
             drone_id_.c_str()
         );
     }
@@ -306,7 +353,8 @@ private:
     uint32_t custom_sequence_status_;
 
     double drop_probability_;
-    double command_probability_;
+    double command_drop_probability_{0.0};
+    int command_delay_ms_{0};
     double rate_;
     int forward_delay_;
 
@@ -332,8 +380,16 @@ private:
         px4_forwarder::msg::CustomVehicleStatus msg;
     };
 
+    template<typename MsgT>
+    struct DelayedCommand {
+        rclcpp::Time release_time;
+        MsgT msg;
+    };
+
     std::deque<DelayedOdometry> delayed_odom_buffer_;
     std::deque<DelayedStatus> delayed_status_buffer_;
+    std::deque<DelayedCommand<px4_msgs::msg::TrajectorySetpoint>> delayed_traj_buffer_;
+    std::deque<DelayedCommand<px4_msgs::msg::VehicleCommand>> delayed_cmd_buffer_;
 
     rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr odometry_sub_;
     rclcpp::Publisher<px4_forwarder::msg::CustomVehicleOdometry>::SharedPtr odometry_pub_;
@@ -343,17 +399,26 @@ private:
     rclcpp::Publisher<px4_forwarder::msg::CustomVehicleStatus>::SharedPtr status_pub_;
     rclcpp::TimerBase::SharedPtr status_timer_;
 
+    // commands subscribers / publishers
+    rclcpp::Subscription<px4_msgs::msg::TrajectorySetpoint>::SharedPtr traj_sub_;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr traj_pub_;
+    rclcpp::Subscription<px4_msgs::msg::VehicleCommand>::SharedPtr cmd_sub_;
+    rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr cmd_pub_;
+
     rclcpp::TimerBase::SharedPtr delivery_timer_;
 
     rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr rate_change_srv_;
     rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr fw_prob_srv_;
-    rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr command_prob_srv_;
     rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr packet_invalidity_srv_;
     rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr packet_issue_legacy_srv_;
     rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr reorder_prob_srv_;
     rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr delayed_prob_srv_;
     rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr forwarder_delay_srv_;
     rclcpp::Service<px4_forwarder::srv::SetNetworkProbabilities>::SharedPtr network_probabilities_srv_;
+
+    // commands services
+    rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr command_delay_srv_;
+    rclcpp::Service<px4_forwarder::srv::SetFloat64>::SharedPtr command_drop_srv_;
 
     std::string extract_drone_number()
     {
@@ -709,6 +774,86 @@ private:
             status_pub_->publish(delayed_status_buffer_.front().msg);
             delayed_status_buffer_.pop_front();
         }
+
+        while (!delayed_traj_buffer_.empty() &&
+               delayed_traj_buffer_.front().release_time <= now) {
+            traj_pub_->publish(delayed_traj_buffer_.front().msg);
+            delayed_traj_buffer_.pop_front();
+        }
+
+        while (!delayed_cmd_buffer_.empty() &&
+               delayed_cmd_buffer_.front().release_time <= now) {
+            cmd_pub_->publish(delayed_cmd_buffer_.front().msg);
+            delayed_cmd_buffer_.pop_front();
+        }
+    }
+
+    // commands logic
+
+    /*
+     * Inoltra un comando verso PX4 applicando:
+     * - drop con probabilità command_drop_probability_
+     * - ritardo fisso command_delay_ms_ (0 = nessun ritardo)
+     */
+    template<typename MsgT>
+    void forward_command(
+        const MsgT& msg,
+        const typename rclcpp::Publisher<MsgT>::SharedPtr& pub,
+        std::deque<DelayedCommand<MsgT>>& buffer,
+        const char* name)
+    {
+        // DROP
+        if (command_drop_probability_ > 0.0 &&
+            dist_(rng_) < command_drop_probability_) {
+            RCLCPP_INFO(this->get_logger(), "[COMMAND DROP] %s", name);
+            return;
+        }
+
+        // DELAY
+        if (command_delay_ms_ > 0) {
+            auto release_time =
+                this->now() + rclcpp::Duration::from_seconds(command_delay_ms_ / 1000.0);
+
+            buffer.push_back({release_time, msg});
+            return;
+        }
+
+        // NORMAL
+        pub->publish(msg);
+    }
+
+    void set_command_delay_callback(
+        const std::shared_ptr<px4_forwarder::srv::SetFloat64::Request> req,
+        std::shared_ptr<px4_forwarder::srv::SetFloat64::Response> resp)
+    {
+        if (req->value < 0.0) {
+            resp->success = false;
+            resp->message = "Only non-negative values are valid";
+            return;
+        }
+
+        command_delay_ms_ = static_cast<int>(req->value);
+
+        resp->success = true;
+        resp->message = "Command delay updated";
+
+        RCLCPP_INFO(
+            this->get_logger(),
+            "Command delay updated to %d ms (0 = no delay)",
+            command_delay_ms_
+        );
+    }
+
+    void set_command_drop_probability_callback(
+        const std::shared_ptr<px4_forwarder::srv::SetFloat64::Request> req,
+        std::shared_ptr<px4_forwarder::srv::SetFloat64::Response> resp)
+    {
+        set_probability_value(
+            req->value,
+            command_drop_probability_,
+            "command_drop_probability",
+            resp
+        );
     }
 
     std::string corrupt_header_odom(px4_forwarder::msg::CustomVehicleOdometry& msg)
@@ -1357,19 +1502,6 @@ private:
         );
     }
 
-    void set_command_probability_callback(
-        const std::shared_ptr<px4_forwarder::srv::SetFloat64::Request> req,
-        std::shared_ptr<px4_forwarder::srv::SetFloat64::Response> resp
-    )
-    {
-        set_probability_value(
-            req->value,
-            command_probability_,
-            "command_probability",
-            resp
-        );
-    }
-
     void set_packet_invalidity_probability_callback(
         const std::shared_ptr<px4_forwarder::srv::SetFloat64::Request> req,
         std::shared_ptr<px4_forwarder::srv::SetFloat64::Response> resp
@@ -1555,7 +1687,7 @@ private:
 
 int main(int argc, char* argv[])
 {
-    std::cout << "Starting forwarder node, odometry + status..." << std::endl;
+    std::cout << "Starting forwarder node, odometry + status + commands..." << std::endl;
 
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<Forwarder>());
