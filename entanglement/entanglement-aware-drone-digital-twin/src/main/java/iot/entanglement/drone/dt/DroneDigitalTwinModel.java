@@ -856,7 +856,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
         client.publish(topic, message);
     }
 
-    /*protected void verifyActionExecution(
+    protected void verifyActionExecution(
             String expectedState,
             long actionTriggerTimestamp,
             long timeoutMs) {
@@ -874,15 +874,16 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                                                 "Property 'state' not found"))
                                 .getValue());
 
-                // Stato già raggiunto:
-                // non considero la richiesta nelle metriche.
+                // già nello stato richiesto
                 if (expectedState.equals(initialState)) {
                     return;
                 }
 
-                final long deadline = actionTriggerTimestamp + timeoutMs;
+                long hardDeadline =
+                        actionTriggerTimestamp + (timeoutMs * 2);
 
-                while (System.currentTimeMillis() < deadline) {
+                while (System.currentTimeMillis()
+                        < hardDeadline) {
 
                     String currentState = String.valueOf(
                             digitalTwinStateManager
@@ -895,16 +896,18 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
 
                     if (expectedState.equals(currentState)) {
 
-                        long timeliness =
+                        long executionTime =
                                 System.currentTimeMillis()
                                         - actionTriggerTimestamp;
 
-                        odteManager.digitalToPhysicalTimeliness
-                                .timer()
-                                .record(Duration.ofMillis(timeliness));
-
                         odteManager.incrementReuqestedActionsCounter();
                         odteManager.incrementExecutedActionsCounter();
+
+                        // Se stai ancora usando il Timer Micrometer
+                        odteManager.digitalToPhysicalTimeliness
+                                .tracker()
+                                .recordObservation(executionTime);
+
 
                         return;
                     }
@@ -912,7 +915,9 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                     Thread.sleep(100);
                 }
 
-                // Timeout: azione richiesta ma non osservata
+                // oltre il doppio del timeout:
+                // richiesta effettuata ma non eseguita
+
                 odteManager.incrementReuqestedActionsCounter();
 
             } catch (InterruptedException e) {
@@ -925,7 +930,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             }
 
         }).start();
-    }*/
+    }
 
     private boolean isPositionReached(
             Vector3D current,
@@ -938,17 +943,44 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
     }
 
 
-    /*protected void verifyPositionExecution(
-            Vector3D targetPosition,
-            long actionTriggerTimestamp,
-            Duration timeout,
-            double tolerance) {
+    protected void verifyPositionExecution(
+        Vector3D targetPosition,
+        long actionTriggerTimestamp,
+        Duration timeout,
+        double tolerance) {
 
-        new Thread(() -> {
+    new Thread(() -> {
 
-            try {
+        try {
 
-                Vector3D currentPosition =
+            Vector3D currentPosition =
+                    (Vector3D) digitalTwinStateManager
+                            .getDigitalTwinState()
+                            .getProperty("position")
+                            .orElseThrow(() ->
+                                    new IllegalStateException(
+                                            "Property 'position' not found"))
+                            .getValue();
+
+            if (isPositionReached(
+                    currentPosition,
+                    targetPosition,
+                    tolerance)) {
+
+                odteManager.incrementReuqestedActionsCounter();
+                odteManager.incrementExecutedActionsCounter();
+
+                return;
+            }
+
+            long hardDeadline =
+                    actionTriggerTimestamp +
+                            (timeout.toMillis() * 2);
+
+            while (System.currentTimeMillis()
+                    < hardDeadline) {
+
+                currentPosition =
                         (Vector3D) digitalTwinStateManager
                                 .getDigitalTwinState()
                                 .getProperty("position")
@@ -957,65 +989,43 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                                                 "Property 'position' not found"))
                                 .getValue();
 
-                // Già arrivato
                 if (isPositionReached(
                         currentPosition,
                         targetPosition,
                         tolerance)) {
+
+                    long executionTime =
+                            System.currentTimeMillis()
+                                    - actionTriggerTimestamp;
+
+                    odteManager.incrementReuqestedActionsCounter();
+                    odteManager.incrementExecutedActionsCounter();
+
+                    odteManager.digitalToPhysicalTimeliness
+                            .tracker()
+                            .recordObservation(executionTime);
+
                     return;
                 }
 
-                long deadline =
-                        actionTriggerTimestamp + timeout.toMillis();
-
-                while (System.currentTimeMillis() < deadline) {
-
-                    currentPosition =
-                            (Vector3D) digitalTwinStateManager
-                                    .getDigitalTwinState()
-                                    .getProperty("position")
-                                    .orElseThrow(() ->
-                                            new IllegalStateException(
-                                                    "Property 'position' not found"))
-                                    .getValue();
-
-                    if (isPositionReached(
-                            currentPosition,
-                            targetPosition,
-                            tolerance)) {
-
-                        long timeliness =
-                                System.currentTimeMillis()
-                                        - actionTriggerTimestamp;
-
-                        odteManager.digitalToPhysicalTimeliness
-                                .timer()
-                                .record(Duration.ofMillis(timeliness));
-
-                        odteManager.incrementReuqestedActionsCounter();
-                        odteManager.incrementExecutedActionsCounter();
-
-                        return;
-                    }
-
-                    Thread.sleep(100);
-                }
-
-                // timeout
-                odteManager.incrementReuqestedActionsCounter();
-
-            } catch (InterruptedException e) {
-
-                Thread.currentThread().interrupt();
-
-            } catch (WldtDigitalTwinStatePropertyException e) {
-
-                throw new RuntimeException(e);
+                Thread.sleep(100);
             }
 
-        }).start();
-    }*/
+            // oltre il doppio del timeout = fallimento
 
+            odteManager.incrementReuqestedActionsCounter();
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+        } catch (WldtDigitalTwinStatePropertyException e) {
+
+            throw new RuntimeException(e);
+        }
+
+    }).start();
+}
 }
 
 

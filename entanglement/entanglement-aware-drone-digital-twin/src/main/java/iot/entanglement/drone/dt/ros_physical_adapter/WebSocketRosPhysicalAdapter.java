@@ -73,9 +73,7 @@ public class WebSocketRosPhysicalAdapter extends ConfigurablePhysicalAdapter<Web
     @Override
     public void onAdapterStart() {
         try {
-            int maxWait = 5000;
-            long waitTime = new Random().nextInt(maxWait);
-            Thread.sleep(waitTime);
+            Thread.sleep(50);
             this.getConfiguration().getWebSocketAdapterClient().connect();
             //Thread.sleep(10000);
             getConfiguration().getIncomingMessages().forEach(this::subscribeClientToDigitalTwinIncomingTopic);

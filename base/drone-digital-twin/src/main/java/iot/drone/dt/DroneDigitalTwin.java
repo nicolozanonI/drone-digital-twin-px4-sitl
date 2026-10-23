@@ -172,53 +172,66 @@ public class DroneDigitalTwin {
 
 
     private static RosTopicSubscribeFunction getVehicleOdometry() {
+
         return msgPayload -> {
-            WldtEvent<?> positionEvent = null;
-            WldtEvent<?> velocityEvent = null;
-            VehicleOdometry vehicleOdometry =
-                    VehicleOdometry.fromJsonObject(msgPayload);
 
-            try {
-                Vector3D position = vehicleOdometry.getPositionAsArray();
+            new Thread(() -> {
 
-                Vector3D velocity = vehicleOdometry.getVelocityAsArray();
+                WldtEvent<?> positionEvent = null;
+                WldtEvent<?> velocityEvent = null;
 
-                positionEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
-                        "position",
-                        position.getJsonObject()
-                );
-                velocityEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
-                        "velocity",
-                        velocity.getJsonObject()
-                );
-            } catch (EventBusException e) {
-                e.printStackTrace();
-            }
-            List<WldtEvent<?>> events = List.of(positionEvent, velocityEvent);
-            return events;
+                VehicleOdometry vehicleOdometry =
+                        VehicleOdometry.fromJsonObject(msgPayload);
+
+                try {
+
+                    Vector3D position =
+                            vehicleOdometry.getPositionAsArray();
+
+                    Vector3D velocity =
+                            vehicleOdometry.getVelocityAsArray();
+
+                    positionEvent =
+                            new PhysicalAssetPropertyWldtEvent<>(
+                                    "position",
+                                    position.getJsonObject()
+                            );
+
+                    velocityEvent =
+                            new PhysicalAssetPropertyWldtEvent<>(
+                                    "velocity",
+                                    velocity.getJsonObject()
+                            );
+
+                } catch (EventBusException e) {
+                    e.printStackTrace();
+                }
+
+            }).start();
+
+            return List.of();
         };
     }
 
     private static RosTopicSubscribeFunction getVehicleStatus() {
+
         return msgPayload -> {
-            WldtEvent<?> statusEvent = null;
 
-            VehicleStatus vehicleStatus =
-                    VehicleStatus.fromJsonObject(msgPayload);
+            new Thread(() -> {
 
-            String status = vehicleStatus.getStatusSummary();
+                VehicleStatus vehicleStatus =
+                        VehicleStatus.fromJsonObject(msgPayload);
 
-            try {
-                statusEvent = new PhysicalAssetPropertyWldtEvent<String>(
-                        "status",
-                        status
+                String status =
+                        vehicleStatus.getStatusSummary();
+
+                System.out.println(
+                        "Status ricevuto: " + status
                 );
-            } catch (EventBusException e) {
-                e.printStackTrace();
-            }
 
-            List<WldtEvent<?>> events = List.of(statusEvent);
-            return events;
+            }).start();
+
+            return List.of();
         };
     }
 

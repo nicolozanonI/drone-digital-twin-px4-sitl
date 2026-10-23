@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,16 +54,16 @@ public class DroneDigitalTwin {
 
             digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_1", 9090, 2, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
 
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_2", 9091, 3, 3002, 9401,
+            /*digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_2", 9090, 3, 3002, 9401,
                     "ws-server-2", "temperature", "config-A", "zone-1", "rural"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_3", 9092,4, 3003, 9402, "ws-server-1", "temperature", "config-B", "zone-4", "forest"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_4", 9093,5, 3004, 9403, "ws-server-1", "temperature", "config-B", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_3", 9090,4, 3003, 9402, "ws-server-1", "temperature", "config-B", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_4", 9090,5, 3004, 9403, "ws-server-1", "temperature", "config-B", "zone-1", "rural"));
             digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_5", 9090, 6,3005, 9404, "ws-server-2", "camera", "config-A", "zone-7", "urban"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_6", 9090,7, 3006,9405, "ws-server-2", "humidity", "config-C", "zone-7", "urban"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_6", 9091,7, 3006,9405, "ws-server-2", "humidity", "config-C", "zone-7", "urban"));
             digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_7", 9091,8, 3007, 9406, "ws-server-1", "camera", "config-A", "zone-1", "rural"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_8", 9092,9, 3008, 9407, "ws-server-2", "pressure", "config-C", "zone-1", "rural"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_9", 9093,10, 3009, 9408, "ws-server-2", "pressure", "config-B", "zone-7", "urban"));
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_10", 9093,11, 3010, 9410, "ws-server-1", "humidity", "config-C", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_8", 9091,9, 3008, 9407, "ws-server-2", "pressure", "config-C", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_9", 9091,10, 3009, 9408, "ws-server-2", "pressure", "config-B", "zone-7", "urban"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_10", 9091,11, 3010, 9410, "ws-server-1", "humidity", "config-C", "zone-4", "forest"));*/
 
             digitalTwinEngine.startAll();
 
@@ -197,8 +198,9 @@ public class DroneDigitalTwin {
             RosPacketErrorDetector rosPacketErrorDetector
     ) {
         return msgPayload -> {
-            WldtEvent<?> positionEvent = null;
-            WldtEvent<?> velocityEvent = null;
+
+            List<WldtEvent<?>> events = new ArrayList<>();
+
             odteManager.incrementTotalPacketsCounter();
             odteManager.incrementUpdateCounter();
 
@@ -206,10 +208,12 @@ public class DroneDigitalTwin {
                     msgPayload,
                     "/forwarder/vehicle/odometry"
             );
+
             switch (validationResult) {
+
                 case "VALID": {
+
                     px4Logger.info("VALID POSITION AND VELOCITY");
-                    //odteManager.incrementValidPacketsCounter();
 
                     CustomVehicleOdometry customVehicleOdometry =
                             CustomVehicleOdometry.fromJsonObject(msgPayload);
@@ -217,30 +221,50 @@ public class DroneDigitalTwin {
                     long dtTimestampUs =
                             System.currentTimeMillis() * 1000L;
 
+
+                    long observationUs =
+                            dtTimestampUs - customVehicleOdometry.getTimestamp();
+
+                    long observationMs =
+                            observationUs / 1000L;
+
+                    px4Logger.info(
+                            "TIMELINESS = {}", observationMs);
+
                     odteManager.recordPhysicalToDigitalObservation(
                             customVehicleOdometry.getTimestamp(),
                             dtTimestampUs
                     );
 
                     try {
-                        Vector3D position = customVehicleOdometry.getPositionAsArray();
 
-                        Vector3D velocity = customVehicleOdometry.getVelocityAsArray();
+                        Vector3D position =
+                                customVehicleOdometry.getPositionAsArray();
 
-                        positionEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
-                                "position",
-                                position.getJsonObject()
+                        Vector3D velocity =
+                                customVehicleOdometry.getVelocityAsArray();
+
+                        events.add(
+                                new PhysicalAssetPropertyWldtEvent<>(
+                                        "position",
+                                        position.getJsonObject()
+                                )
                         );
-                        velocityEvent = new PhysicalAssetPropertyWldtEvent<JsonObject>(
-                                "velocity",
-                                velocity.getJsonObject()
+
+                        events.add(
+                                new PhysicalAssetPropertyWldtEvent<>(
+                                        "velocity",
+                                        velocity.getJsonObject()
+                                )
                         );
+
                     } catch (EventBusException e) {
-                        e.printStackTrace();
+                        px4Logger.error("Error creating odometry events", e);
                     }
 
                     break;
                 }
+
                 case "DELAYED_TIMESTAMP": {
                     px4Logger.info("DELAYED TIMESTAMP");
                     odteManager.incrementValidPacketsCounter();
@@ -254,75 +278,91 @@ public class DroneDigitalTwin {
                     odteManager.incrementOutOfSyncPacketsCounter();
                     break;
                 }
+
                 case "INVALID_TIMESTAMP": {
                     px4Logger.info("INVALID TIMESTAMP");
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
+
                 case "CORRUPTED": {
                     px4Logger.info("CORRUPTED");
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
+
                 case "INVALID_STATE_VALUE": {
                     px4Logger.info("INVALID STATE VALUE");
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
+
                 case "INVALID": {
                     px4Logger.info("INVALID");
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
+
                 default: {
-                    px4Logger.warn("UNKNOWN VALIDATION RESULT: {}", validationResult);
+                    px4Logger.warn(
+                            "UNKNOWN VALIDATION RESULT: {}",
+                            validationResult
+                    );
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
             }
-            List<WldtEvent<?>> events = List.of(positionEvent, velocityEvent);
+
             return events;
         };
     }
+
 
     private static RosTopicSubscribeFunction getVehicleStatus(
             OdteManager odteManager,
             RosPacketErrorDetector rosPacketErrorDetector
     ) {
+
         return msgPayload -> {
-            WldtEvent<?> statusEvent = null;
 
-
+            List<WldtEvent<?>> events = new ArrayList<>();
 
             odteManager.incrementTotalPacketsCounter();
 
-            String validationResult = rosPacketErrorDetector.messageValidationResult(
-                    msgPayload,
-                    "/forwarder/vehicle/status"
-            );
-
+            String validationResult =
+                    rosPacketErrorDetector.messageValidationResult(
+                            msgPayload,
+                            "/forwarder/vehicle/status"
+                    );
 
             switch (validationResult) {
 
                 case "VALID": {
+
                     px4Logger.info("VALID STATUS");
-                    //odteManager.physicalToDigitalTimeliness.tracker().recordEvent();
+
                     odteManager.incrementHeartbeatsCounter();
                     odteManager.incrementValidPacketsCounter();
 
                     CustomVehicleStatus customVehicleStatus =
                             CustomVehicleStatus.fromJsonObject(msgPayload);
 
-                    String status = customVehicleStatus.getStatusSummary();
+                    String status =
+                            customVehicleStatus.getStatusSummary();
 
                     try {
-                        statusEvent = new PhysicalAssetPropertyWldtEvent<String>(
-                                "status",
-                                status
+
+                        events.add(
+                                new PhysicalAssetPropertyWldtEvent<>(
+                                        "status",
+                                        status
+                                )
                         );
+
                     } catch (EventBusException e) {
-                        e.printStackTrace();
+                        px4Logger.error("Error creating status event", e);
                     }
+
                     break;
                 }
 
@@ -357,18 +397,23 @@ public class DroneDigitalTwin {
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
+
                 case "INVALID": {
                     px4Logger.info("INVALID STATUS");
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
+
                 default: {
-                    px4Logger.warn("UNKNOWN STATUS VALIDATION RESULT: {}", validationResult);
+                    px4Logger.warn(
+                            "UNKNOWN STATUS VALIDATION RESULT: {}",
+                            validationResult
+                    );
                     odteManager.incrementInvalidPacketsCounter();
                     break;
                 }
             }
-            List<WldtEvent<?>> events = List.of(statusEvent);
+
             return events;
         };
     }

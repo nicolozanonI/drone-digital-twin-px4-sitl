@@ -458,7 +458,7 @@ public class OdteManager {
                     "Ratio of delta times under threshold",
                     0.5,
                     Duration.ofSeconds(300),
-                    Duration.ofMillis(2000),
+                    Duration.ofMillis(650),
                     Duration.ofSeconds(300)
             );
 
@@ -478,8 +478,7 @@ public class OdteManager {
                 double ratio1 = this.reliabilityPhysicalToDigital.ratioGauge().value();
                 double physicalToDigitalTimelinessValue = this.physicalToDigitalTimeliness.currentValue();
                 return ratio1 * physicalToDigitalTimelinessValue *
-                        this.packetValidityMetric.validPacketsPercentageGauge.value() *
-                        this.packetOutOfSeqMetric.validPacketsPercentageGauge.value();
+                        1;
             })
             .description("Product of updates and requests efficiency ratios")
             .register(prometheusRegistry);
