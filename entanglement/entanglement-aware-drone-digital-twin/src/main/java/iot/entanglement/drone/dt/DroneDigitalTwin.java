@@ -52,7 +52,7 @@ public class DroneDigitalTwin {
 
             DigitalTwinEngine digitalTwinEngine = new DigitalTwinEngine();
 
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_1", 9090, 2, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_1", 9090, 2, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
 
             /*digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_2", 9090, 3, 3002, 9401,
                     "ws-server-2", "temperature", "config-A", "zone-1", "rural"));
@@ -198,119 +198,130 @@ public class DroneDigitalTwin {
             RosPacketErrorDetector rosPacketErrorDetector
     ) {
         return msgPayload -> {
-
             List<WldtEvent<?>> events = new ArrayList<>();
 
-            odteManager.incrementTotalPacketsCounter();
-            odteManager.incrementUpdateCounter();
-
-            String validationResult = rosPacketErrorDetector.messageValidationResult(
-                    msgPayload,
-                    "/forwarder/vehicle/odometry"
-            );
-
-            switch (validationResult) {
-
-                case "VALID": {
-
-                    px4Logger.info("VALID POSITION AND VELOCITY");
-
-                    CustomVehicleOdometry customVehicleOdometry =
-                            CustomVehicleOdometry.fromJsonObject(msgPayload);
-
-                    long dtTimestampUs =
-                            System.currentTimeMillis() * 1000L;
+            Thread processingThread = new Thread(() -> {
+                odteManager.incrementTotalPacketsCounter();
 
 
-                    long observationUs =
-                            dtTimestampUs - customVehicleOdometry.getTimestamp();
+                String validationResult = rosPacketErrorDetector.messageValidationResult(
+                        msgPayload,
+                        "/forwarder/vehicle/odometry"
+                );
 
-                    long observationMs =
-                            observationUs / 1000L;
+                switch (validationResult) {
 
-                    px4Logger.info(
-                            "TIMELINESS = {}", observationMs);
+                    case "VALID": {
+                        px4Logger.info("VALID POSITION AND VELOCITY");
 
-                    odteManager.recordPhysicalToDigitalObservation(
-                            customVehicleOdometry.getTimestamp(),
-                            dtTimestampUs
-                    );
 
-                    try {
+                        CustomVehicleOdometry customVehicleOdometry =
+                                CustomVehicleOdometry.fromJsonObject(msgPayload);
 
-                        Vector3D position =
-                                customVehicleOdometry.getPositionAsArray();
+                        long dtTimestampUs =
+                                System.currentTimeMillis() * 1000L;
 
-                        Vector3D velocity =
-                                customVehicleOdometry.getVelocityAsArray();
+                        long observationUs =
+                                dtTimestampUs - customVehicleOdometry.getTimestamp();
 
-                        events.add(
-                                new PhysicalAssetPropertyWldtEvent<>(
-                                        "position",
-                                        position.getJsonObject()
-                                )
+                        long observationMs =
+                                observationUs / 1000L;
+
+                        px4Logger.info(
+                                "TIMELINESS = {}", observationMs);
+
+                        odteManager.recordPhysicalToDigitalObservation(
+                                customVehicleOdometry.getTimestamp(),
+                                dtTimestampUs
                         );
+                        odteManager.incrementUpdateCounter();
 
-                        events.add(
-                                new PhysicalAssetPropertyWldtEvent<>(
-                                        "velocity",
-                                        velocity.getJsonObject()
-                                )
-                        );
+                        try {
+                            Vector3D position =
+                                    customVehicleOdometry.getPositionAsArray();
 
-                    } catch (EventBusException e) {
-                        px4Logger.error("Error creating odometry events", e);
+                            Vector3D velocity =
+                                    customVehicleOdometry.getVelocityAsArray();
+
+                            synchronized (events) {
+                                events.add(
+                                        new PhysicalAssetPropertyWldtEvent<>(
+                                                "position",
+                                                position.getJsonObject()
+                                        )
+                                );
+
+                                events.add(
+                                        new PhysicalAssetPropertyWldtEvent<>(
+                                                "velocity",
+                                                velocity.getJsonObject()
+                                        )
+                                );
+                            }
+
+                        } catch (EventBusException e) {
+                            px4Logger.error("Error creating odometry events", e);
+                        }
+
+                        break;
                     }
 
-                    break;
-                }
+                    case "DELAYED_TIMESTAMP": {
+                        px4Logger.info("DELAYED TIMESTAMP");
+                        odteManager.incrementValidPacketsCounter();
+                        odteManager.incrementOutOfSyncPacketsCounter();
+                        break;
+                    }
 
-                case "DELAYED_TIMESTAMP": {
-                    px4Logger.info("DELAYED TIMESTAMP");
-                    odteManager.incrementValidPacketsCounter();
-                    odteManager.incrementOutOfSyncPacketsCounter();
-                    break;
-                }
+                    case "OUT_OF_SEQUENCE": {
+                        px4Logger.info("OUT OF SEQUENCE");
+                        odteManager.incrementValidPacketsCounter();
+                        odteManager.incrementOutOfSyncPacketsCounter();
+                        break;
+                    }
 
-                case "OUT_OF_SEQUENCE": {
-                    px4Logger.info("OUT OF SEQUENCE");
-                    odteManager.incrementValidPacketsCounter();
-                    odteManager.incrementOutOfSyncPacketsCounter();
-                    break;
-                }
+                    case "INVALID_TIMESTAMP": {
+                        px4Logger.info("INVALID TIMESTAMP");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "INVALID_TIMESTAMP": {
-                    px4Logger.info("INVALID TIMESTAMP");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+                    case "CORRUPTED": {
+                        px4Logger.info("CORRUPTED");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "CORRUPTED": {
-                    px4Logger.info("CORRUPTED");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+                    case "INVALID_STATE_VALUE": {
+                        px4Logger.info("INVALID STATE VALUE");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "INVALID_STATE_VALUE": {
-                    px4Logger.info("INVALID STATE VALUE");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+                    case "INVALID": {
+                        px4Logger.info("INVALID");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "INVALID": {
-                    px4Logger.info("INVALID");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
+                    default: {
+                        px4Logger.warn(
+                                "UNKNOWN VALIDATION RESULT: {}",
+                                validationResult
+                        );
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
                 }
+            });
 
-                default: {
-                    px4Logger.warn(
-                            "UNKNOWN VALIDATION RESULT: {}",
-                            validationResult
-                    );
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+            // Avvio del thread e attesa del completamento per restituire la lista eventi
+            processingThread.start();
+            try {
+                processingThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                px4Logger.error("Odometry processing thread interrupted", e);
             }
 
             return events;
@@ -327,95 +338,111 @@ public class DroneDigitalTwin {
 
             List<WldtEvent<?>> events = new ArrayList<>();
 
-            odteManager.incrementTotalPacketsCounter();
+            Thread processingThread = new Thread(() -> {
+                odteManager.incrementTotalPacketsCounter();
 
-            String validationResult =
-                    rosPacketErrorDetector.messageValidationResult(
-                            msgPayload,
-                            "/forwarder/vehicle/status"
-                    );
-
-            switch (validationResult) {
-
-                case "VALID": {
-
-                    px4Logger.info("VALID STATUS");
-
-                    odteManager.incrementHeartbeatsCounter();
-                    odteManager.incrementValidPacketsCounter();
-
-                    CustomVehicleStatus customVehicleStatus =
-                            CustomVehicleStatus.fromJsonObject(msgPayload);
-
-                    String status =
-                            customVehicleStatus.getStatusSummary();
-
-                    try {
-
-                        events.add(
-                                new PhysicalAssetPropertyWldtEvent<>(
-                                        "status",
-                                        status
-                                )
+                String validationResult =
+                        rosPacketErrorDetector.messageValidationResult(
+                                msgPayload,
+                                "/forwarder/vehicle/status"
                         );
 
-                    } catch (EventBusException e) {
-                        px4Logger.error("Error creating status event", e);
+                switch (validationResult) {
+
+                    case "VALID": {
+
+                        px4Logger.info("VALID STATUS");
+
+                        odteManager.incrementHeartbeatsCounter();
+                        odteManager.incrementValidPacketsCounter();
+
+                        CustomVehicleStatus customVehicleStatus =
+                                CustomVehicleStatus.fromJsonObject(msgPayload);
+
+                        String status =
+                                customVehicleStatus.getStatusSummary();
+
+                        try {
+
+                            synchronized (events) {
+                                events.add(
+                                        new PhysicalAssetPropertyWldtEvent<>(
+                                                "status",
+                                                status
+                                        )
+                                );
+                            }
+
+                        } catch (EventBusException e) {
+                            px4Logger.error("Error creating status event", e);
+                        }
+
+                        break;
                     }
 
-                    break;
-                }
+                    case "DELAYED_TIMESTAMP": {
+                        px4Logger.info("DELAYED TIMESTAMP STATUS");
+                        odteManager.incrementValidPacketsCounter();
+                        odteManager.incrementOutOfSyncPacketsCounter();
+                        break;
+                    }
 
-                case "DELAYED_TIMESTAMP": {
-                    px4Logger.info("DELAYED TIMESTAMP STATUS");
-                    odteManager.incrementValidPacketsCounter();
-                    odteManager.incrementOutOfSyncPacketsCounter();
-                    break;
-                }
+                    case "OUT_OF_SEQUENCE": {
+                        px4Logger.info("OUT OF SEQUENCE STATUS");
+                        odteManager.incrementValidPacketsCounter();
+                        odteManager.incrementOutOfSyncPacketsCounter();
+                        break;
+                    }
 
-                case "OUT_OF_SEQUENCE": {
-                    px4Logger.info("OUT OF SEQUENCE STATUS");
-                    odteManager.incrementValidPacketsCounter();
-                    odteManager.incrementOutOfSyncPacketsCounter();
-                    break;
-                }
+                    case "INVALID_TIMESTAMP": {
+                        px4Logger.info("INVALID TIMESTAMP STATUS");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "INVALID_TIMESTAMP": {
-                    px4Logger.info("INVALID TIMESTAMP STATUS");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+                    case "CORRUPTED": {
+                        px4Logger.info("CORRUPTED STATUS");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "CORRUPTED": {
-                    px4Logger.info("CORRUPTED STATUS");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+                    case "INVALID_STATE_VALUE": {
+                        px4Logger.info("INVALID STATE VALUE STATUS");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "INVALID_STATE_VALUE": {
-                    px4Logger.info("INVALID STATE VALUE STATUS");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+                    case "INVALID": {
+                        px4Logger.info("INVALID STATUS");
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
 
-                case "INVALID": {
-                    px4Logger.info("INVALID STATUS");
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
+                    default: {
+                        px4Logger.warn(
+                                "UNKNOWN STATUS VALIDATION RESULT: {}",
+                                validationResult
+                        );
+                        odteManager.incrementInvalidPacketsCounter();
+                        break;
+                    }
                 }
+            });
 
-                default: {
-                    px4Logger.warn(
-                            "UNKNOWN STATUS VALIDATION RESULT: {}",
-                            validationResult
-                    );
-                    odteManager.incrementInvalidPacketsCounter();
-                    break;
-                }
+            // Avvio del thread e attesa del completamento per restituire la lista eventi
+            processingThread.start();
+            try {
+                processingThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                px4Logger.error("Status processing thread interrupted", e);
             }
 
             return events;
         };
     }
-
 }
+
+/*
+
+* */

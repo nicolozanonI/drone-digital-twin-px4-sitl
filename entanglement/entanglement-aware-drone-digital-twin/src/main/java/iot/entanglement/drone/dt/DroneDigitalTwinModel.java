@@ -484,6 +484,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                 this.pose_cmd = positionArray;
                 this.pose_cmd_bytes = (byte[]) pose_cmd.toString().getBytes();
                 //verifyDroneMovement(true, System.currentTimeMillis());
+                verifyPositionExecution(positionArray, System.currentTimeMillis(), Duration.ofSeconds(10), 0.15);
                 break;
             case "waypoints":
                 try {
@@ -532,7 +533,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                     isMoving = false;
                     trajectorySetpointCommand();
                     publishPhysicalAssetActionWldtEvent("takeoff", digitalActionWldtEvent.getBody());
-                    //verifyActionExecution("AUTO.TAKEOFF", System.currentTimeMillis());
+                    verifyActionExecution("ARMED - TAKEOFF", System.currentTimeMillis(), 3000);
                 } catch (EventBusException e) {
                     throw new RuntimeException(e);
                 }
@@ -544,7 +545,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
 
                     publishPhysicalAssetActionWldtEvent("land", digitalActionWldtEvent.getBody());
                     isMoving = false;
-                    //verifyActionExecution("AUTO.LAND", System.currentTimeMillis());
+                    verifyActionExecution("ARMED - AUTO_LAND", System.currentTimeMillis(), 3000);
                 } catch (EventBusException e) {
                     throw new RuntimeException(e);
                 }
@@ -555,7 +556,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                 try {
 
                     publishPhysicalAssetActionWldtEvent("arm", digitalActionWldtEvent.getBody());
-                    //verifyDroneArming(true, System.currentTimeMillis());
+                    verifyActionExecution("ARMED - AUTO_LOITER", System.currentTimeMillis(), 3000);
                 } catch (EventBusException e) {
                     throw new RuntimeException(e);
                 }

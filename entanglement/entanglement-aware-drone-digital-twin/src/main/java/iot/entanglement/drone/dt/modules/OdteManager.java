@@ -71,7 +71,7 @@ public class OdteManager {
                                     String ratioGaugeName, String ratioGaugeDescription,
                                     double initialValue) {
 
-        SlidingWindowCounter counter = new SlidingWindowCounter(prometheusRegistry, counterName, counterDescription, 30);
+        SlidingWindowCounter counter = new SlidingWindowCounter(prometheusRegistry, counterName, counterDescription, 60);
         AtomicReference<Double> expectedGaugeValue = new AtomicReference<>(initialValue);
         Gauge gauge = Gauge.builder(gaugeName, expectedGaugeValue, AtomicReference::get)
                 .description(gaugeDescription)
@@ -81,7 +81,7 @@ public class OdteManager {
 
                     double actualUpdatesInWindow = counter.getWindowTotalCount();
                     double expectedRatePerSecond = expectedGaugeValue.get();
-                    final double WINDOW_SECONDS = 30.0;
+                    final double WINDOW_SECONDS = 60.0;
                     double expectedUpdatesInWindow = expectedRatePerSecond * WINDOW_SECONDS;
 
                     if (expectedUpdatesInWindow == 0.0) {
@@ -415,7 +415,7 @@ public class OdteManager {
             "Current expected updates rate per second",
             droneId + "_reliability_physical_to_digital",
             "Ratio between actual updates and expected rate",
-            8
+            10
     );
 
     public final odteRatio availabilityDigitalToPhysical = createMetrics(
@@ -426,7 +426,7 @@ public class OdteManager {
             "Current expected hb rate per second",
             droneId + "_availability_digital_to_physical",
             "Ratio between actual hb and expected rate",
-            2.0);
+            5);
 
     public final ReliabilityPhysicalToDigital reliabilityDigitalToPhysical = createReliabilityDigitalToPhysicalMetric(
             this.prometheusRegistry,
@@ -436,18 +436,18 @@ public class OdteManager {
             "Current expected actions rate per second",
             droneId + "_reliability_digital_to_physical",  // Nome del ratio
             "Ratio between actual actions and expected rate",
-            30);
+            60);
 
 
     /*public Timeliness physicalToDigitalTimeliness = createTimerWithRatio(
             "delta_time",
             "Delta time calculation: t1 + t2 - texec",
             "physical_to_digital_timeliness",
-            "Ratio of delta times under 1 second (30s window)",
+            "Ratio of delta times under 1 second (60s window)",
             0.5,
-            Duration.ofSeconds(300),
+            Duration.ofSeconds(600),
             Duration.ofMillis(500),
-            Duration.ofSeconds(300)
+            Duration.ofSeconds(600)
     );*/
 
     public final Timeliness physicalToDigitalTimeliness =
@@ -457,9 +457,9 @@ public class OdteManager {
                     "physical_to_digital_timeliness",
                     "Ratio of delta times under threshold",
                     0.5,
-                    Duration.ofSeconds(300),
-                    Duration.ofMillis(650),
-                    Duration.ofSeconds(300)
+                    Duration.ofSeconds(60),
+                    Duration.ofMillis(3200),
+                    Duration.ofSeconds(60)
             );
 
 
@@ -467,11 +467,11 @@ public class OdteManager {
             droneId + "_delta_actions_time",
             "Action delta time calculation: t1 + t2 - texec",
             droneId + "_digital_to_physical_timeliness",
-            "Ratio of actions delta times under 1 second (30s window)",
+            "Ratio of actions delta times under 1 second (60s window)",
             0.5,
-            Duration.ofSeconds(300),
+            Duration.ofSeconds(60),
             Duration.ofMillis(100000),
-            Duration.ofSeconds(300)
+            Duration.ofSeconds(60)
     );
 
     public final Gauge physicalToDigitalOdte = Gauge.builder(droneId + "_physical_to_digital_odte", () -> {
@@ -497,7 +497,7 @@ public class OdteManager {
             droneId + "_pose_packets",
             "Packet validity ratio metrics",
             0.99,
-            30
+            60
     );
 
     public final PacketQualityMetrics packetOutOfSeqMetric = createPacketQualityMetrics(
@@ -505,7 +505,7 @@ public class OdteManager {
             droneId + "_out_of_seq_packets",
             "Ratio between out-of-sequence packets and total packet count",
             0.99,
-            30
+            60
     );
 
     public void recordPhysicalToDigitalObservation(
