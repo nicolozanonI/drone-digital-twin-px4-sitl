@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -59,6 +60,12 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
     private Boolean isArmed = false;
 
     private Boolean isMoving = false;
+
+    private final AtomicLong actionIdGenerator =
+            new AtomicLong(0);
+
+    private final Set<Long> completedActions =
+            ConcurrentHashMap.newKeySet();
 
     private Integer httpPrometheusServerPort;
 
@@ -478,13 +485,15 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                     throw new RuntimeException(e);
                 }
                 break;*/
+
             case "pose":
+                long poseActionId = createActionId();
                 Vector3D positionArray = parseMyArray((byte[]) digitalActionWldtEvent.getBody().toString().getBytes());
                 assert positionArray != null;
                 this.pose_cmd = positionArray;
                 this.pose_cmd_bytes = (byte[]) pose_cmd.toString().getBytes();
                 //verifyDroneMovement(true, System.currentTimeMillis());
-                verifyPositionExecution(positionArray, System.currentTimeMillis(), Duration.ofSeconds(10), 0.15);
+                verifyPositionExecution(poseActionId, positionArray, System.currentTimeMillis(), Duration.ofSeconds(10), 0.15);
                 break;
             case "waypoints":
                 try {
@@ -530,10 +539,13 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             case "swarm-takeoff":
             case "takeoff":
                 try {
+                    long takeoffActionId = createActionId();
                     isMoving = false;
                     trajectorySetpointCommand();
+
                     publishPhysicalAssetActionWldtEvent("takeoff", digitalActionWldtEvent.getBody());
-                    verifyActionExecution("ARMED - TAKEOFF", System.currentTimeMillis(), 3000);
+
+                    verifyActionExecution(takeoffActionId, "ARMED - TAKEOFF", System.currentTimeMillis(), 3000);
                 } catch (EventBusException e) {
                     throw new RuntimeException(e);
                 }
@@ -542,10 +554,11 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             case "swarm-land":
             case "land":
                 try {
-
+                    long landActionId = createActionId();
                     publishPhysicalAssetActionWldtEvent("land", digitalActionWldtEvent.getBody());
                     isMoving = false;
-                    verifyActionExecution("ARMED - AUTO_LAND", System.currentTimeMillis(), 3000);
+
+                    verifyActionExecution(landActionId,"ARMED - AUTO_LAND", System.currentTimeMillis(), 3000);
                 } catch (EventBusException e) {
                     throw new RuntimeException(e);
                 }
@@ -554,9 +567,14 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             case "swarm-arm":
             case "arm":
                 try {
+                    px4_shadowing_logger.info(
+                            "VERIFY METHOD ENTERED"
+                    );
 
                     publishPhysicalAssetActionWldtEvent("arm", digitalActionWldtEvent.getBody());
-                    verifyActionExecution("ARMED - AUTO_LOITER", System.currentTimeMillis(), 3000);
+                    long armActionId = createActionId();
+                    verifyActionExecution(armActionId,"ARMED - AUTO_LOITER", System.currentTimeMillis(), 3000);
+
                 } catch (EventBusException e) {
                     throw new RuntimeException(e);
                 }
@@ -800,6 +818,10 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
         }
     }
 
+    private long createActionId() {
+        return actionIdGenerator.incrementAndGet();
+    }
+
     public void startSendingOdteMetrics(MqttClient client, String edgeUpdateTopic) {
         px4_shadowing_logger.info("BEFORE THREAD");
         new Thread(() -> {
@@ -858,42 +880,66 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
     }
 
     protected void verifyActionExecution(
+            long actionId,
             String expectedState,
             long actionTriggerTimestamp,
             long timeoutMs) {
 
         new Thread(() -> {
 
+            px4_shadowing_logger.info(
+                    "[ACTION {}] START expectedState={} timeout={}ms",
+                    actionId,
+                    expectedState,
+                    timeoutMs
+            );
+
             try {
 
                 String initialState = String.valueOf(
                         digitalTwinStateManager
                                 .getDigitalTwinState()
-                                .getProperty("state")
+                                .getProperty("status")
                                 .orElseThrow(() ->
                                         new IllegalStateException(
                                                 "Property 'state' not found"))
                                 .getValue());
 
-                // già nello stato richiesto
+                px4_shadowing_logger.info(
+                        "[ACTION {}] Initial state={}",
+                        actionId,
+                        initialState
+                );
+
                 if (expectedState.equals(initialState)) {
+
+                    px4_shadowing_logger.warn(
+                            "[ACTION {}] Expected state already reached. Exiting.",
+                            actionId
+                    );
+
                     return;
                 }
 
                 long hardDeadline =
                         actionTriggerTimestamp + (timeoutMs * 2);
 
-                while (System.currentTimeMillis()
-                        < hardDeadline) {
+                while (System.currentTimeMillis() < hardDeadline) {
 
                     String currentState = String.valueOf(
                             digitalTwinStateManager
                                     .getDigitalTwinState()
-                                    .getProperty("state")
+                                    .getProperty("status")
                                     .orElseThrow(() ->
                                             new IllegalStateException(
                                                     "Property 'state' not found"))
                                     .getValue());
+
+                    px4_shadowing_logger.debug(
+                            "[ACTION {}] Current state={}",
+                            actionId,
+                            currentState
+                    );
 
                     if (expectedState.equals(currentState)) {
 
@@ -901,14 +947,35 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                                 System.currentTimeMillis()
                                         - actionTriggerTimestamp;
 
+                        px4_shadowing_logger.info(
+                                "[ACTION {}] SUCCESS executionTime={}ms",
+                                actionId,
+                                executionTime
+                        );
+
                         odteManager.incrementReuqestedActionsCounter();
+
+                        px4_shadowing_logger.info(
+                                "[ACTION {}] requested++",
+                                actionId
+                        );
+
                         odteManager.incrementExecutedActionsCounter();
 
-                        // Se stai ancora usando il Timer Micrometer
+                        px4_shadowing_logger.info(
+                                "[ACTION {}] executed++",
+                                actionId
+                        );
+
                         odteManager.digitalToPhysicalTimeliness
                                 .tracker()
                                 .recordObservation(executionTime);
 
+                        px4_shadowing_logger.info(
+                                "[ACTION {}] timelinessObservation={}ms",
+                                actionId,
+                                executionTime
+                        );
 
                         return;
                     }
@@ -916,16 +983,45 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                     Thread.sleep(100);
                 }
 
-                // oltre il doppio del timeout:
-                // richiesta effettuata ma non eseguita
+                px4_shadowing_logger.warn(
+                        "[ACTION {}] TIMEOUT",
+                        actionId
+                );
+
+                if (!completedActions.add(actionId)) {
+
+                    px4_shadowing_logger.warn(
+                            "[ACTION {}] Already completed",
+                            actionId
+                    );
+
+                    return;
+                }
 
                 odteManager.incrementReuqestedActionsCounter();
 
+                px4_shadowing_logger.info(
+                        "[ACTION {}] requested++ (timeout)",
+                        actionId
+                );
+
             } catch (InterruptedException e) {
+
+                px4_shadowing_logger.error(
+                        "[ACTION {}] Interrupted",
+                        actionId,
+                        e
+                );
 
                 Thread.currentThread().interrupt();
 
-            } catch (WldtDigitalTwinStatePropertyException e) {
+            } catch (Exception e) {
+
+                px4_shadowing_logger.error(
+                        "[ACTION {}] Exception",
+                        actionId,
+                        e
+                );
 
                 throw new RuntimeException(e);
             }
@@ -945,6 +1041,7 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
 
 
     protected void verifyPositionExecution(
+            long actionId,
         Vector3D targetPosition,
         long actionTriggerTimestamp,
         Duration timeout,
@@ -967,6 +1064,8 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                     currentPosition,
                     targetPosition,
                     tolerance)) {
+
+
 
                 odteManager.incrementReuqestedActionsCounter();
                 odteManager.incrementExecutedActionsCounter();
@@ -999,6 +1098,10 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
                             System.currentTimeMillis()
                                     - actionTriggerTimestamp;
 
+                    if (!completedActions.add(actionId)) {
+                        return;
+                    }
+
                     odteManager.incrementReuqestedActionsCounter();
                     odteManager.incrementExecutedActionsCounter();
 
@@ -1013,6 +1116,10 @@ public class DroneDigitalTwinModel extends DigitalTwinModel{
             }
 
             // oltre il doppio del timeout = fallimento
+
+            if (!completedActions.add(actionId)) {
+                return;
+            }
 
             odteManager.incrementReuqestedActionsCounter();
 

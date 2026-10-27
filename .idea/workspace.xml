@@ -9,6 +9,8 @@
       <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwin.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwin.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwinModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/DroneDigitalTwinModel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/modules/OdteManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/modules/OdteManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/RosCommands.java" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/ros/RosCommands.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/utils/ros_nodes/forwarder_node/forwarder_node.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/entanglement/entanglement-aware-drone-digital-twin/src/main/java/iot/entanglement/drone/dt/utils/ros_nodes/forwarder_node/forwarder_node.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +63,9 @@
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\nicol\IdeaProjects\drone-digital-twin-px4-sitl\entanglement\entanglement-aware-drone-digital-twin\src\main\java\iot\entanglement\drone\dt\utils" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="iot.entanglement.drone.dt.utils.ros_nodes.forwarder_node" />
     </key>
   </component>
   <component name="RunManager" selected="Application.iot.entanglement.drone.dt.DroneDigitalTwin">

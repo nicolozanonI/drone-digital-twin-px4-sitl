@@ -415,7 +415,7 @@ public class OdteManager {
             "Current expected updates rate per second",
             droneId + "_reliability_physical_to_digital",
             "Ratio between actual updates and expected rate",
-            10
+            600
     );
 
     public final odteRatio availabilityDigitalToPhysical = createMetrics(
@@ -426,7 +426,7 @@ public class OdteManager {
             "Current expected hb rate per second",
             droneId + "_availability_digital_to_physical",
             "Ratio between actual hb and expected rate",
-            5);
+            300);
 
     public final ReliabilityPhysicalToDigital reliabilityDigitalToPhysical = createReliabilityDigitalToPhysicalMetric(
             this.prometheusRegistry,
@@ -458,7 +458,7 @@ public class OdteManager {
                     "Ratio of delta times under threshold",
                     0.5,
                     Duration.ofSeconds(60),
-                    Duration.ofMillis(3200),
+                    Duration.ofMillis(4000),
                     Duration.ofSeconds(60)
             );
 
@@ -470,7 +470,7 @@ public class OdteManager {
             "Ratio of actions delta times under 1 second (60s window)",
             0.5,
             Duration.ofSeconds(60),
-            Duration.ofMillis(100000),
+            Duration.ofMillis(3000),
             Duration.ofSeconds(60)
     );
 

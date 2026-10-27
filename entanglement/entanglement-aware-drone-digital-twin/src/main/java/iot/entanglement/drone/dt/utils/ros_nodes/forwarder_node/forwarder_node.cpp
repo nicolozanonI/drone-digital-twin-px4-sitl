@@ -123,8 +123,7 @@ public:
             "/" + drone_id_ + "/forwarder/in/trajectory_setpoint",
             qos,
             [this](px4_msgs::msg::TrajectorySetpoint::SharedPtr msg) {
-                forward_command<px4_msgs::msg::TrajectorySetpoint>(
-                    *msg, traj_pub_, delayed_traj_buffer_, "trajectory_setpoint");
+                forward_trajectory_setpoint(*msg);
             }
         );
 
@@ -775,10 +774,19 @@ private:
             delayed_status_buffer_.pop_front();
         }
 
+        bool traj_published_this_tick = false;
+
         while (!delayed_traj_buffer_.empty() &&
                delayed_traj_buffer_.front().release_time <= now) {
             traj_pub_->publish(delayed_traj_buffer_.front().msg);
             delayed_traj_buffer_.pop_front();
+            traj_published_this_tick = true;
+        }
+
+        // Startup fallback: se il ritardo è attivo e nessun messaggio ritardato è ancora pronto (fase iniziale),
+        // pubblichiamo l'ultimo setpoint memorizzato nel buffer per evitare il timeout Offboard su PX4.
+        if (command_delay_ms_ > 0 && !traj_published_this_tick && !delayed_traj_buffer_.empty()) {
+            traj_pub_->publish(delayed_traj_buffer_.back().msg);
         }
 
         while (!delayed_cmd_buffer_.empty() &&
@@ -789,6 +797,33 @@ private:
     }
 
     // commands logic
+
+    /*
+     * Inoltra un TrajectorySetpoint verso PX4 applicando:
+     * - drop con probabilità command_drop_probability_
+     * - ritardo costante command_delay_ms_ (senza buchi iniziali / timeout Offboard)
+     */
+    void forward_trajectory_setpoint(const px4_msgs::msg::TrajectorySetpoint& msg)
+    {
+        // DROP
+        if (command_drop_probability_ > 0.0 &&
+            dist_(rng_) < command_drop_probability_) {
+            RCLCPP_INFO(this->get_logger(), "[COMMAND DROP] trajectory_setpoint");
+            return;
+        }
+
+        // DELAY
+        if (command_delay_ms_ > 0) {
+            auto release_time =
+                this->now() + rclcpp::Duration::from_seconds(command_delay_ms_ / 1000.0);
+
+            delayed_traj_buffer_.push_back({release_time, msg});
+            return;
+        }
+
+        // NORMAL
+        traj_pub_->publish(msg);
+    }
 
     /*
      * Inoltra un comando verso PX4 applicando:

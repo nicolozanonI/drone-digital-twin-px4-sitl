@@ -52,9 +52,14 @@ public class DroneDigitalTwin {
 
             DigitalTwinEngine digitalTwinEngine = new DigitalTwinEngine();
 
-            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_1", 9090, 2, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_1", 9090, 1, 3001, 9400,"ws-server-1", "pressure", "config-B", "zone-4", "forest"));
+            /*digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_2", 9090, 3, 3002, 9401,
+                    "ws-server-2", "temperature", "config-A", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_3", 9090,4, 3003, 9402, "ws-server-1", "temperature", "config-B", "zone-4", "forest"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_4", 9090,5, 3004, 9403, "ws-server-1", "temperature", "config-B", "zone-1", "rural"));
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("px4_5", 9090, 6,3005, 9404, "ws-server-2", "camera", "config-A", "zone-7", "urban"));
 
-            /*digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_2", 9090, 3, 3002, 9401,
+            digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_2", 9090, 3, 3002, 9401,
                     "ws-server-2", "temperature", "config-A", "zone-1", "rural"));
             digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_3", 9090,4, 3003, 9402, "ws-server-1", "temperature", "config-B", "zone-4", "forest"));
             digitalTwinEngine.addDigitalTwin(createDigitalTwin("uav_4", 9090,5, 3004, 9403, "ws-server-1", "temperature", "config-B", "zone-1", "rural"));
@@ -93,7 +98,7 @@ public class DroneDigitalTwin {
             );
 
             RosCommands rosCommand = new RosCommands(droneId, targetSystem);
-            RosBridgeClient rosBridgeClient1 = new RosBridgeClient("10.120.0.235", websocketServerPort); // rosclient created
+            RosBridgeClient rosBridgeClient1 = new RosBridgeClient("192.168.56.106", websocketServerPort); // rosclient created
             WebSocketRosPhysicalAdapterConfiguration PhysicalAdapter1Config = new WebSocketRosPhysicalAdapterConfiguration(
                     droneId + "wesocket-adapter-config-1", rosBridgeClient1, rosCommand);
 

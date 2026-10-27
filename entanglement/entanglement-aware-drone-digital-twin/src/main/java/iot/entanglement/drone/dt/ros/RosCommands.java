@@ -74,7 +74,7 @@ public class RosCommands extends Object{
                 0.0F, 0.0F, 0.0F, 0.0F, 400, targetSystem, 1,
                 1, 1, 0, true);
 
-        RosTopic position_command_topic = RosTopic.builder('/' + droneId+"/fmu/in/vehicle_command", vehicleCommand).build();
+        RosTopic position_command_topic = RosTopic.builder('/' + droneId+"/forwarder/in/vehicle_command", vehicleCommand).build();
         rosBridge.advertise(position_command_topic);
         rosBridge.publish(position_command_topic);
         Thread.sleep(50);
@@ -87,7 +87,7 @@ public class RosCommands extends Object{
                 0.0F, 0.0F, 0.0F, 0.0F, 21, targetSystem, 1,
                 1, 1, 0, true);
 
-        RosTopic position_command_topic = RosTopic.builder('/' + droneId+"/fmu/in/vehicle_command", vehicleCommand).build();
+        RosTopic position_command_topic = RosTopic.builder('/' + droneId+"/forwarder/in/vehicle_command", vehicleCommand).build();
         rosBridge.advertise(position_command_topic);
         rosBridge.publish(position_command_topic);
         rosBridge.publish(position_command_topic);
@@ -102,7 +102,7 @@ public class RosCommands extends Object{
         VehicleCommand vehicleCommand = new VehicleCommand(0, 1.0F, 6.0F, 0.0F,
                 0.0F, 0.0F, 0.0F, 0.0F, 176, targetSystem, 1,
                 1, 1, 0, true);
-        RosTopic position_command_topic = RosTopic.builder('/' + droneId+"/fmu/in/vehicle_command", vehicleCommand).build();
+        RosTopic position_command_topic = RosTopic.builder('/' + droneId+"/forwarder/in/vehicle_command", vehicleCommand).build();
         rosBridge.advertise(position_command_topic);
         rosBridge.publish(position_command_topic);
         Thread.sleep(50);
@@ -141,7 +141,7 @@ public class RosCommands extends Object{
                 3.14F,
                 yawSpeedSetpoint
         );
-        RosTopic setpointTopicMessage = RosTopic.builder('/' + droneId + "/fmu/in/trajectory_setpoint", trajectorySetpoint).build();
+        RosTopic setpointTopicMessage = RosTopic.builder('/' + droneId + "/forwarder/in/trajectory_setpoint", trajectorySetpoint).build();
         rosBridge.publish(setpointTopicMessage);
     }
 
